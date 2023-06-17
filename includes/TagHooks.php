@@ -4,21 +4,21 @@
 //use MediaWiki\Logger\LoggerFactory;
 
 class TagHooks{
-    private static $preamble = "\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{mathrsfs}\n\\usepackage{amssymb}\n\\usepackage{tikz-cd}\n";
+    private static $preamble = "\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{mathrsfs}\n\\usepackage{amssymb}\n";
 
     public static function onParserFirstCallInit( Parser $parser)
     {
         $parser->setHook( 'math', [ self::class, 'tagRender']);
     }
     public static function tagRender( $input, array $args, Parser $parser, PPFrame $frame){
-        $text = "\\documentclass{article}\n" . self::$preamble . "\\pagestyle{empty}\n\\begin{document}\n";
+        $text = "\\documentclass{standalone}\n" . self::$preamble . "\\begin{document}\n";
         if( $args['display'] == 'inline')
         {
-            $text .= "\$" . $input . "\$";
+            $text .= "\$" . $input . "\$\n";
         }
         else if( $args['display'] == 'block')
         {
-            $text .= "\\begin{displaymath}" . $input . "\\end{displaymath}";
+            $text .= "\$\\displaystyle" . $input . "\$\n";
         }
         else
         {
@@ -26,7 +26,7 @@ class TagHooks{
         }
         $text .= "\\end{document}";
 
-        $texfile = fopen('main.tex','w');
+        $texfile = fopen('extensions/ConvertLaTeX/main.tex','w');
         if($texfile == false) return self::fileError('o');
         $length = fwrite($texfile, $text);
         if($length == false) return self::fileError('w');
@@ -35,14 +35,10 @@ class TagHooks{
         $execStatus = exec( '/usr/bin/pdflatex -output-directory=extensions/ConvertLaTeX extensions/ConvertLaTeX/main.tex' );
         if($execStatus == false) return self::execError(1);
         
-        $execStatus = exec( 'pdfcrop --clip /var/www/mediawiki/extensions/ConvertLaTeX/main.pdf extensions/ConvertLaTeX/tmp.pdf');
-        return $execStatus;
-        if($execStatus == false) return self::execError(2);
-        
-        $execStatus = exec( 'pdf2svg extensions/ConvertLaTeX/tmp.pdf extensions/ConvertLaTeX/out.svg');
+        $execStatus = exec( 'pdf2svg extensions/ConvertLaTeX/main.pdf extensions/ConvertLaTeX/main.svg');
         if($execStatus == false) return self::execError(3);
 
-        $svgfile = fopen('extensions/ConvertLaTeX/out.svg','r');
+        $svgfile = fopen('extensions/ConvertLaTeX/main.svg','r');
         if($svgfile == false) return self::fileError('o');
         fgets($svgfile);
         $content = '';
@@ -52,7 +48,8 @@ class TagHooks{
             $content .= $line;
         }
         fclose($svgfile);
-        return $content;
+        exec( 'rm extensions/ConvertLaTeX/main.*');
+        return [$content, 'markerType' => 'nowiki'];
     }
 
     public static function argsError($arg)
