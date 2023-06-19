@@ -2,7 +2,7 @@
     "name": "ConvertLaTeX",
     "author": "Aki",
     "description": "转化LaTeX代码为svg.",
-    "version": "0.1",
+    "version": "0.2",
     "license-name": "GPL-2.0",
     "AutoloadClasses": {
         "TagHooks": "includes/TagHooks.php",
