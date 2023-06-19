@@ -1,0 +1,14 @@
+.inline-formule{
+    vertical-align: middle;
+}
+
+.block-formule-div{
+    display: flex;
+    justify-content: center;
+}
+
+.block-formule-span{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

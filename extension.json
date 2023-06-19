@@ -5,9 +5,17 @@
     "version": "0.1",
     "license-name": "GPL-2.0",
     "AutoloadClasses": {
-        "TagHooks": "includes/TagHooks.php"
+        "TagHooks": "includes/TagHooks.php",
+        "StyleHooks": "includes/StyleHooks.php"
     },
     "Hooks": {
-        "ParserFirstCallInit": "TagHooks::onParserFirstCallInit"
+        "ParserFirstCallInit": "TagHooks::onParserFirstCallInit",
+        "BeforePageDisplay": "StyleHooks::onBeforePageDisplay"
+    },
+    "ResourceModules": {
+        "ext.Formule.styles": {
+            "localBasePath": "resources",
+            "styles": ["formuleStyles.css"]
+        }
     }
 }
