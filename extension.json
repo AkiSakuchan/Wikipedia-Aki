@@ -1,21 +1,31 @@
 {
     "name": "ConvertLaTeX",
     "author": "Aki",
-    "description": "转化LaTeX代码为svg.",
-    "version": "0.2",
+    "description": "转化LaTeX代码为html.",
+    "version": "0.3",
     "license-name": "GPL-2.0",
+    "manifest_version": 2,
+    "requires":{
+        "MediaWiki": ">=1.35"
+    },
     "AutoloadClasses": {
-        "TagHooks": "includes/TagHooks.php",
-        "StyleHooks": "includes/StyleHooks.php"
+        "scriptStyleHooks": "includes/scriptStyleHooks.php",
+        "tagHooks": "includes/tagHooks.php"
     },
     "Hooks": {
-        "ParserFirstCallInit": "TagHooks::onParserFirstCallInit",
-        "BeforePageDisplay": "StyleHooks::onBeforePageDisplay"
+        "BeforePageDisplay": "scriptStyleHooks::onBeforePageDisplay",
+        "ParserFirstCallInit": "tagHooks::onParserFirstCallInit"
     },
     "ResourceModules": {
-        "ext.Formule.styles": {
+        "ext.environmentStyles": {
             "localBasePath": "resources",
-            "styles": ["formuleStyles.css"]
+            "styles": ["environmentStyles.css"]
+        },
+        "ext.mathJax":{
+            "localBasePath": "resources",
+            "packageFiles":[
+                "load-mathjax.js"
+            ]
         }
     }
 }

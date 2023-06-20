@@ -1,9 +1,9 @@
 <?php
 
-class StyleHooks
+class scriptStyleHooks
 {
     public static function onBeforePageDisplay(OutputPage $out, Skin $skin)
     {
-        $out->addModuleStyles('ext.Formule.styles');
+        $out->addModules('ext.mathJax');
     }
 }
