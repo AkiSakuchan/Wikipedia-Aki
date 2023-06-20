@@ -1,3 +1,67 @@
 .env-title{
     font-weight: bold;
 }
+
+body{
+    counter-reset: block-counter;
+}
+blockquote.theorem:before{
+	counter-increment: block-counter;
+	content: "定理 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+blockquote.theorem{
+	background-color: #f4fcff;
+	border-color: #a0e0ff;
+}
+
+blockquote.lemma:before{
+	counter-increment: block-counter;
+	content: "引理 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+blockquote.lemma{
+	background-color: #f4fcff;
+	border-color: #a0e0ff;
+}
+
+blockquote.proposition:before{
+	counter-increment: block-counter;
+	content: "命题 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+blockquote.proposition{
+	background-color: #f4fcff;
+	border-color: #a0e0ff;	
+}
+
+blockquote.corollary:before{
+	counter-increment: block-counter;
+	content: "推论 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+blockquote.corollary{
+	background-color: #f4fcff;
+	border-color: #a0e0ff;	
+}
+
+blockquote.definition:before{
+	counter-increment: block-counter;
+	content: "定义 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+blockquote.definition{
+	background-color: #fffdf0;
+	border-color: #ffd880;	
+}
+
+blockquote.remark:before{
+	counter-increment: block-counter;
+	content: "注 " counter(block-counter) " : ";
+	font-weight: bold;
+}
+
+blockquote.remark{
+	background-color: #f2faf2;
+	border-color: #a0e0a0;
+}
