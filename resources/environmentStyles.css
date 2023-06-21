@@ -4,8 +4,27 @@
 
 body{
     counter-reset: block-counter;
+	counter-reset: right-counter;
 }
-blockquote.theorem:before{
+
+div.right-tag{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+div.right-tag>span{
+	position: absolute;
+	right: 0;
+}
+
+span.right-tag::before{
+	counter-increment: right-counter;
+	content: "( " counter(right-counter) " )";
+}
+
+blockquote.theorem::before{
 	counter-increment: block-counter;
 	content: "定理 " counter(block-counter) " : ";
 	font-weight: bold;
@@ -15,7 +34,7 @@ blockquote.theorem{
 	border-color: #a0e0ff;
 }
 
-blockquote.lemma:before{
+blockquote.lemma::before{
 	counter-increment: block-counter;
 	content: "引理 " counter(block-counter) " : ";
 	font-weight: bold;
@@ -25,7 +44,7 @@ blockquote.lemma{
 	border-color: #a0e0ff;
 }
 
-blockquote.proposition:before{
+blockquote.proposition::before{
 	counter-increment: block-counter;
 	content: "命题 " counter(block-counter) " : ";
 	font-weight: bold;
@@ -35,7 +54,7 @@ blockquote.proposition{
 	border-color: #a0e0ff;	
 }
 
-blockquote.corollary:before{
+blockquote.corollary::before{
 	counter-increment: block-counter;
 	content: "推论 " counter(block-counter) " : ";
 	font-weight: bold;
@@ -45,7 +64,7 @@ blockquote.corollary{
 	border-color: #a0e0ff;	
 }
 
-blockquote.definition:before{
+blockquote.definition::before{
 	counter-increment: block-counter;
 	content: "定义 " counter(block-counter) " : ";
 	font-weight: bold;
@@ -55,7 +74,7 @@ blockquote.definition{
 	border-color: #ffd880;	
 }
 
-blockquote.remark:before{
+blockquote.remark::before{
 	counter-increment: block-counter;
 	content: "注 " counter(block-counter) " : ";
 	font-weight: bold;

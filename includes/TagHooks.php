@@ -6,7 +6,7 @@
 class tagHooks{
     public static function onParserFirstCallInit( Parser $parser)
     {
-        //$parser->setHook( 'math', [ self::class, 'mathRender']);
+        $parser->setHook( 'math', [ self::class, 'mathRender']);
         $parser->setHook( 'tikzcd', [ self::class, 'tikzcdRender']);
 
         $parser->setHook( 'definition', [self::class, 'definitionRender']);
@@ -119,7 +119,20 @@ class tagHooks{
         $div_container = $dom->createElement('div');
         $dom->appendChild($div_container);
 
-        $div_container->setAttribute('class', 'tikzcd-container');
+        if( array_key_exists('tag', $args) && $args['tag'] == 'true' )
+        {
+            //如果tag属性存在且为'true'则设置right-tag类使其自动编号.
+            $div_container->setAttribute('class', 'tikzcd-container right-tag');
+
+            $tag = $dom->createElement('span');
+            $tag->setAttribute('class', 'right-tag');
+            $div_container->appendChild($tag);
+        }
+        else
+        {
+            $div_container->setAttribute('class', 'tikzcd-container');
+        }
+        
         if( array_key_exists('id', $args) ) $div_container->setAttribute('id', $args['id']);
 
         $content_dom = new DOMDocument();
@@ -132,6 +145,26 @@ class tagHooks{
         $height = floatval($svg->getAttribute('height'))*1.6;
         $svg->setAttribute('height', $height.'pt');
         $div_container->appendChild($svg);
+        return [$dom->saveHTML(), 'markerType' => 'nowiki'];
+    }
+
+    public static function mathRender($input, array $args, Parser $parser, PPFrame $frame)
+    {
+        //默认生成编号公式.
+        $dom = new DOMDocument();
+        $container = $dom->createElement('div','$$'. $input . '$$');
+        $dom->appendChild($container);
+        if(array_key_exists('id', $args)) $container->setAttribute('id', $args['id']);
+        
+        if( !(array_key_exists('tag', $args) && $args['tag'] == 'false') )
+        {
+            $container->setAttribute('class', 'right-tag'); //这个类配合css实现行间公式自动编号.
+
+            $tag = $dom->createElement('span');
+            $tag->setAttribute('class', 'right-tag');
+            $container->appendChild($tag);
+        }
+
         return [$dom->saveHTML(), 'markerType' => 'nowiki'];
     }
 }
