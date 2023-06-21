@@ -65,3 +65,9 @@ blockquote.remark{
 	background-color: #f2faf2;
 	border-color: #a0e0a0;
 }
+
+.tikzcd-container{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
