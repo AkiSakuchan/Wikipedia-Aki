@@ -151,7 +151,7 @@ class tagHooks{
         $svg_xml = preg_replace('/width="([\d\.]+)(pt)?"/', '', $svg_xml);  // 去掉宽度属性, 让浏览器根据高度属性自动计算宽度.
         $svg_xml = preg_replace('/height="([\d\.]+)(pt)?"/', 'height=' . $height . 'pt', $svg_xml);     // 替换高度属性为原本的1.5倍.
 
-        // 下面的代码我也不知道为何, 但是有用, 否则就会出现显示错误.....
+        // 需要让svg图片中的内部标识符随机化, 否则同一个页面中存在TeXLive生成的多个svg时会出现冲突导致显示错误.
         $rand = '';
         for ($i = 0; $i < 16; $i++)
         {
