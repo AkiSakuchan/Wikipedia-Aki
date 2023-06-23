@@ -3,8 +3,7 @@
 }
 
 body{
-    counter-reset: block-counter;
-	counter-reset: right-counter;
+    counter-reset: block-counter right-counter;
 }
 
 div.right-tag{
