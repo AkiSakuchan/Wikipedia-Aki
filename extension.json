@@ -2,7 +2,7 @@
     "name": "ConvertLaTeX",
     "author": "Aki",
     "description": "转化LaTeX代码为html.",
-    "version": "0.7",
+    "version": "0.73",
     "license-name": "GPL-2.0",
     "manifest_version": 2,
     "requires":{
