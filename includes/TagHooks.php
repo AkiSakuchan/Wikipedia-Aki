@@ -120,8 +120,10 @@ class tagHooks{
         if($svg_xml == '') return $input . "\n";
         curl_close($ch);
 
+        $svg_hash = hash('md5', $svg_xml);  // 依然是通过获取哈希值, 填入html元素中, 最后替换的方式, 避免PHP的DOM解析错误.
+
         $dom = new DOMDocument();
-        $div_container = $dom->createElement('div');
+        $div_container = $dom->createElement('div', $svg_hash);
         $dom->appendChild($div_container);
 
         if( array_key_exists('tag', $args) && $args['tag'] == 'true' )
@@ -140,17 +142,24 @@ class tagHooks{
         
         if( array_key_exists('id', $args) ) $div_container->setAttribute('id', $args['id']);
 
-        $content_dom = new DOMDocument();
-        $content_dom->loadXML($svg_xml);
+        $svg_dom = new DOMDocument();
+        $svg_dom->loadXML($svg_xml);
+        $svg_head = $svg_dom->getElementsByTagName('svg')->item(0);
+        $height = floatval($svg_head->getAttribute('height'))*1.5; // 获得原始高度的1.5倍, 作为显示的图片的高度, 否则太小.
 
-        $svg_content = $content_dom->getElementsByTagName('svg')->item(0);
-        $svg = $dom->importNode($svg_content, true);
-        $svg->setAttribute('class', 'tikzcd-itself');
-        $svg->removeAttribute('width');
-        $height = floatval($svg->getAttribute('height'))*1.6;
-        $svg->setAttribute('height', $height.'pt');
-        $div_container->appendChild($svg);
-        return [$dom->saveHTML(), 'markerType' => 'nowiki'];
+        $svg_xml = preg_replace('/^<\?xml[^>]*\?>/','',$svg_xml);   // 去掉xml头
+        $svg_xml = preg_replace('/width="([\d\.]+)(pt)?"/', '', $svg_xml);  // 去掉宽度属性, 让浏览器根据高度属性自动计算宽度.
+        $svg_xml = preg_replace('/height="([\d\.]+)(pt)?"/', 'height=' . $height . 'pt', $svg_xml);     // 替换高度属性为原本的1.5倍.
+
+        // 下面的代码我也不知道为何, 但是有用, 否则就会出现显示错误.....
+        $rand = '';
+        for ($i = 0; $i < 16; $i++)
+        {
+            $rand .= dechex(rand(0, 15));
+        }
+        $svg_xml = preg_replace_callback('/(id="|href="#|url\(#)/', function ($matches) use ($rand) { return $matches[0].$rand; }, $svg_xml);
+
+        return [str_replace($svg_hash, $svg_xml, $dom->saveHTML()), 'markerType' => 'nowiki'];
     }
 
     public static function mathRender($input, array $args, Parser $parser, PPFrame $frame)
