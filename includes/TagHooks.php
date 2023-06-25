@@ -4,6 +4,8 @@
 //use MediaWiki\Logger\LoggerFactory;
 
 class tagHooks{
+    private static $blockTag = 1;
+    private static $rightTag = 1;
     public static function onParserFirstCallInit( Parser $parser)
     {
         $parser->setHook( 'math', [ self::class, 'mathRender']);
@@ -49,66 +51,85 @@ class tagHooks{
 
     public static function definitionRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'definition');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'definition', '定义');
     }
 
     public static function theoremRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'theorem');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'theorem', '定理');
     }
 
     public static function propositionRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'proposition');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'proposition', '命题');
     }
 
     public static function corollaryRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'corollary');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'corollary', '推论');
     }
 
     public static function lemmaRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'lemma');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'lemma', '引理');
     }
 
     public static function remarkRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'remark');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'remark', '注');
     }
 
     public static function exampleRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'example');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'example', '例');
     }
 
-    private static function commonEnvironment( $input, array $args, Parser $parser, PPFrame $frame, string $className)
+    private static function commonEnvironment( $input, array $args, Parser $parser, PPFrame $frame, string $className, string $title)
     {
-        // 因为直接用输入字符串创建div会导致DOM组件识别到&之类的常见符号时出错, 但是又需要把这些字符直接传递给客户端进行数学解析等
-        // 因此先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值. 
-        // 同时直接用PHP的DOM解析wiki解析成的代码也会出现乱码(需要转换为HTML的编码), 因此用替换的方式也可以避免这个问题
-        $source_code = $parser->recursiveTagParse($input, $frame);
-        $source_hash = hash('md5', $source_code);
-
         $dom = new DOMDocument();
-        $blockquote = $dom->createElement('blockquote', $source_hash);
-        $dom->appendChild($blockquote);
-
+        $blockquote = $dom->createElement('blockquote');
         $blockquote->setAttribute('class', $className);
         if( array_key_exists('id', $args) )
         {
             $blockquote->setAttribute('id', $args['id']);
         }
+        $dom->appendChild($blockquote);
+
+        // 构造标题字符串
+        $tag = self::$blockTag;
+        $titletag = $title . ' ' . "$tag" . ' ';
+        self::$blockTag++;
+        if(array_key_exists('name', $args))
+        {
+            $titletag .= '(' . $args['name'] . ')';
+        }
+        $titletag .= ':';
+
+        $span = $dom->createElement('span', $titletag);
+        $span->setAttribute('class', 'env-title');
+        $blockquote->appendChild($span);
+
+        // 因为直接用输入字符串创建div会导致DOM组件识别到&之类的常见符号时出错, 但是又需要把这些字符直接传递给客户端进行数学解析等
+        // 因此先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值. 
+        // 同时直接用PHP的DOM解析wiki解析成的代码也会出现乱码(需要转换为HTML的编码), 因此用替换的方式也可以避免这个问题
+        $source_code = $parser->recursiveTagParse($input, $frame);
+        $source_hash = md5($source_code);
+
+        $div = $dom->createElement('div', $source_hash);
+        $blockquote->appendChild($div);
 
         return str_replace($source_hash, $source_code, $dom->saveHTML());
     }
 
     public static function tikzcdRender($input, array $args, Parser $parser, PPFrame $frame)
     {
+        //获得svg图片代码
         $ch = curl_init('http://127.0.0.1');
         $source = array('type' => 'tikzcd', 'tex' => $input);
-        if( array_key_exists('option', $args)) $source['option'] = $args['option'];
-
+        if( array_key_exists('option', $args))
+        {
+            $source['option'] = $args['option'];
+        }
         curl_setopt_array($ch, array(
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
@@ -123,24 +144,25 @@ class tagHooks{
         $svg_hash = hash('md5', $svg_xml);  // 依然是通过获取哈希值, 填入html元素中, 最后替换的方式, 避免PHP的DOM解析错误.
 
         $dom = new DOMDocument();
-        $div_container = $dom->createElement('div', $svg_hash);
-        $dom->appendChild($div_container);
+        $div = $dom->createElement('div', $svg_hash);
+        $div->setAttribute('class', 'container');
+        $dom->appendChild($div);
 
         if( array_key_exists('tag', $args) && $args['tag'] == 'true' )
         {
-            // 如果tag属性存在且为'true'则设置right-tag类使其自动编号.
-            $div_container->setAttribute('class', 'tikzcd-container right-tag');
+            // 如果tag属性存在且为'true'则添加编号.
+            $tag = self::$rightTag;
+            $span = $dom->createElement('span', '(' . "$tag" . ')');
+            self::$rightTag++;
+            $span->setAttribute('class', 'right-tag');
 
-            $tag = $dom->createElement('span');
-            $tag->setAttribute('class', 'right-tag');
-            $div_container->appendChild($tag);
+            $div->appendChild($span);
+
+            if( array_key_exists('id', $args) )
+            {
+                $div->setAttribute('id', $args['id']);
+            }
         }
-        else
-        {
-            $div_container->setAttribute('class', 'tikzcd-container');
-        }
-        
-        if( array_key_exists('id', $args) ) $div_container->setAttribute('id', $args['id']);
 
         $svg_dom = new DOMDocument();
         $svg_dom->loadXML($svg_xml);
@@ -164,25 +186,27 @@ class tagHooks{
 
     public static function mathRender($input, array $args, Parser $parser, PPFrame $frame)
     {
-        // 默认生成编号公式.
+        // 生成编号公式.
         $dom = new DOMDocument();
 
         // 因为直接用输入字符串创建div会导致DOM组件识别到&之类的在TeX中很常见的符号时出错, 但是又需要把这些字符直接传递给客户端进行数学解析
         // 因此先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值.
         $source_code = '$$' . $input . '$$';
-        $source_hash = hash('md5', $source_code);
-        $container = $dom->createElement('div', $source_hash);
-        $dom->appendChild($container);
-        if(array_key_exists('id', $args)) $container->setAttribute('id', $args['id']);
-        
-        if( !(array_key_exists('tag', $args) && $args['tag'] == 'false') )
-        {
-            $container->setAttribute('class', 'right-tag'); //这个类配合css实现行间公式自动编号.
+        $source_hash = md5($source_code);
 
-            $tag = $dom->createElement('span');
-            $tag->setAttribute('class', 'right-tag');
-            $container->appendChild($tag);
+        $div = $dom->createElement('div', $source_hash);
+        $div->setAttribute('class', 'container');
+        if(array_key_exists('id', $args))
+        {
+            $div->setAttribute('id', $args['id']);
         }
+        $dom->appendChild($div);
+
+        $tag = self::$rightTag;
+        $span = $dom->createElement('span', '(' . $tag . ')');
+        self::$rightTag++;
+        $span->setAttribute('class', 'right-tag');
+        $div->appendChild($span);
 
         return [str_replace($source_hash, $source_code, $dom->saveHTML()), 'markerType' => 'nowiki'];
     }
