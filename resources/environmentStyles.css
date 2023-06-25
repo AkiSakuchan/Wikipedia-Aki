@@ -2,13 +2,6 @@
     font-weight: bold;
 }
 
-div.right-tag{
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-}
-
 span.right-tag{
 	position: absolute;
 	right: 0;
