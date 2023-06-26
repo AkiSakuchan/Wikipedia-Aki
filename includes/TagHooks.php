@@ -3,9 +3,11 @@
 //use MediaWiki\Shell\Shell;
 //use MediaWiki\Logger\LoggerFactory;
 
-class tagHooks{
-    private static $blockTag = 1;
-    private static $rightTag = 1;
+class tagHooks
+{
+    private static $crossRefData = array();
+    private static $crossRefTitle = array();
+
     public static function onParserFirstCallInit( Parser $parser)
     {
         $parser->setHook( 'math', [ self::class, 'mathRender']);
@@ -18,10 +20,101 @@ class tagHooks{
         $parser->setHook( 'lemma', [self::class, 'lemmaRender']);
         $parser->setHook( 'remark', [self::class, 'remarkRender']);
         $parser->setHook( 'example', [self::class, 'exampleRender']);
+
         // $parser->setHook( 'enumerate', [self::class, 'enumerateRender']);
-        // $parser->setHook( 'cref', [self::class, 'crefRender']);
+        $parser->setHook( 'cref', [self::class, 'crefRender']);
 
         $parser->setHook( 'proofc', [self::class, 'proofcRender']);
+    }
+
+    public static function onParserBeforeInternalParse(Parser &$parser, &$text, &$strip_state)
+    {
+        // 若正在解析系统消息, 比如最近修改时间等, 就不执行后续操作直接通过
+        if( $parser->getOptions()->getInterfaceMessage())
+        {
+            return true;
+        }
+
+        // 模版中也不进行后续操作直接通过
+        $title = $parser->getTitle();
+        if(in_array($title->getNamespace(), [ NS_TEMPLATE, NS_MODULE, NS_MEDIAWIKI]))
+        {
+            return true;
+        }
+
+        //self::preProcess($parser, $text);
+
+        $envCounter = 1;
+        $idNumber = array();
+        $source = $text;
+
+        $text = preg_replace_callback('/<(lemma|theorem|proposition|corollary|remark|example|definition)([^>]*)>/',
+        function($matches) use(&$envCounter, &$idNumber): string
+        {
+            $attr = $matches[2];
+            if( strlen($attr) > 0 && $attr[0] != ' ')
+            {
+                // 如果lemma等之后的字符串不是空串, 那么第一个字符必须是空格, 否则这个标签就不是上面那些标签. 
+                // 因此直接原路返回被匹配到的字符串
+                return $matches[0];
+            }
+
+            //寻找id="xxx"这样的id标签, 如果找到就设置数组之后记录到类里面.
+            if( preg_match('/ id="([ \w]*)"/', $attr, $matchesAttr) )
+            {
+                $idNumber[$matchesAttr[1]] = "$envCounter";
+            }
+
+            // 临时加上一个temp属性, 使得其他自定义标签处理程序能获得编号信息.
+            $ret = '<' . $matches[1] . $attr . ' temp="' . "$envCounter" . '">';
+            $envCounter++;
+            return $ret;
+        },
+        $source);
+
+        $source = $text;
+        $rightCounter = 1;
+
+        $text = preg_replace_callback('/<(tikzcd|math)([^>]*)>/',
+        function($matches) use(&$rightCounter, &$idNumber): string
+        {
+            $attr = $matches[2];
+            if( strlen($attr) == 0 || (strlen($attr) > 0 && $attr[0] != ' '))
+            {
+                return $matches[0];
+            }
+
+            // 如果是tikzcd标签, 并且没有找到tag="true"或者id="xxx"这样的属性, 表示这个标签不需要被编号, 直接原路返回
+            // 必须把匹配程序放在&&前面, 使得一定执行这个匹配, 否则下面的$matchesAttr就不会有结果.
+            if( (!preg_match('/ tag="[ ]*true[ ]*"| id="([ \w]*)"/', $attr, $matchesAttr)) && ($matches[1] == 'tikzcd') )
+            {
+                return $matches[0];
+            }
+            else
+            {
+                $ret = '<' . $matches[1] . $attr . ' temp="' . "$rightCounter" . '">';
+
+                // 如果还存在id="xxx"这样的标签, 则记录
+                if( strlen($matchesAttr[1]) > 0)
+                {
+                    $idNumber[$matchesAttr[1]] = "$rightCounter";
+                }
+
+                $rightCounter++;
+                return $ret;
+            }
+        },
+        $source);
+
+        // 把找到的id和编号的对应关系放到类属性里面
+        // 由于这个钩子可能会被调用多次, 即使之前添加了判断也无法完全避免未知执行,
+        // 因此判断idNumber是否为0, 避免污染之前储存的数据
+        if(count($idNumber) > 0)
+        {
+            self::$crossRefData = $idNumber;
+        }
+
+        return true;
     }
 
     public static function proofcRender( $input, array $args, Parser $parser, PPFrame $frame)
@@ -92,13 +185,13 @@ class tagHooks{
         if( array_key_exists('id', $args) )
         {
             $blockquote->setAttribute('id', $args['id']);
+            self::$crossRefTitle[$args['id']] = $title;
         }
         $dom->appendChild($blockquote);
 
-        // 构造标题字符串
-        $tag = self::$blockTag;
+        // 构造标题字符串, 在onParserBeforeInternalParse中已经添加了一个临时标签
+        $tag = $args['temp'];
         $titletag = $title . ' ' . "$tag" . ' ';
-        self::$blockTag++;
         if(array_key_exists('name', $args))
         {
             $titletag .= '(' . $args['name'] . ')';
@@ -148,12 +241,11 @@ class tagHooks{
         $div->setAttribute('class', 'container');
         $dom->appendChild($div);
 
-        if( array_key_exists('tag', $args) && $args['tag'] == 'true' )
+        if( array_key_exists('temp', $args) )
         {
-            // 如果tag属性存在且为'true'则添加编号.
-            $tag = self::$rightTag;
+            // 如果temp属性则添加编号.
+            $tag = $args['temp'];
             $span = $dom->createElement('span', '(' . "$tag" . ')');
-            self::$rightTag++;
             $span->setAttribute('class', 'right-tag');
 
             $div->appendChild($span);
@@ -161,6 +253,7 @@ class tagHooks{
             if( array_key_exists('id', $args) )
             {
                 $div->setAttribute('id', $args['id']);
+                self::$crossRefTitle[$args['id']] = '';
             }
         }
 
@@ -199,15 +292,40 @@ class tagHooks{
         if(array_key_exists('id', $args))
         {
             $div->setAttribute('id', $args['id']);
+            self::$crossRefTitle[$args['id']] = '';
         }
         $dom->appendChild($div);
 
-        $tag = self::$rightTag;
+        $tag = $args['temp'];
         $span = $dom->createElement('span', '(' . $tag . ')');
-        self::$rightTag++;
         $span->setAttribute('class', 'right-tag');
         $div->appendChild($span);
 
         return [str_replace($source_hash, $source_code, $dom->saveHTML()), 'markerType' => 'nowiki'];
+    }
+
+    public static function crefRender($input, array $args, Parser $parser, PPFrame $frame)
+    {
+        if(!array_key_exists('id', $args))
+        {
+            return "\n没有指定引用标识符\n";
+        }
+        
+        $id = $args['id'];
+        if(!array_key_exists($id, self::$crossRefData))
+        {
+            return "标识符 $id 不存在";
+        }
+
+        $title = self::$crossRefTitle[$id];
+        $tag = self::$crossRefData[$id];
+        if(strlen($title) > 0)
+        {
+            return $parser->recursiveTagParse('[[#' . $id . '|' . $title. ' ' . $tag . ' ]]',$frame);
+        }
+        else
+        {
+            return $parser->recursiveTagParse('[[#'. $id . '|' . '(' . $tag . ')]]', $frame);
+        }
     }
 }

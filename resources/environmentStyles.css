@@ -37,6 +37,11 @@ blockquote.remark{
 	border-color: #a0e0a0;
 }
 
+blockquote.example{
+	background-color: #f2faf2;
+	border-color: #a0e0a0;
+}
+
 .container{
 	display: flex;
 	justify-content: center;

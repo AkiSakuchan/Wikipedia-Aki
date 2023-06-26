@@ -2,7 +2,7 @@
     "name": "ConvertLaTeX",
     "author": "Aki",
     "description": "转化LaTeX代码为html.",
-    "version": "0.85",
+    "version": "1.0",
     "license-name": "GPL-2.0",
     "manifest_version": 2,
     "requires":{
@@ -14,7 +14,8 @@
     },
     "Hooks": {
         "BeforePageDisplay": "scriptStyleHooks::onBeforePageDisplay",
-        "ParserFirstCallInit": "tagHooks::onParserFirstCallInit"
+        "ParserFirstCallInit": "tagHooks::onParserFirstCallInit",
+        "ParserBeforeInternalParse": "tagHooks::onParserBeforeInternalParse"
     },
     "ResourceModules": {
         "ext.environmentStyles": {
