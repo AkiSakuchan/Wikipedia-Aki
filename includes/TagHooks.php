@@ -60,7 +60,7 @@ class tagHooks
             }
 
             //寻找id="xxx"这样的id标签, 如果找到就设置数组之后记录到类里面.
-            if( preg_match('/ id="([ \w]*)"/', $attr, $matchesAttr) )
+            if( preg_match('/ id="([ \w-\.]*)"/', $attr, $matchesAttr) )
             {
                 $idNumber[$matchesAttr[1]] = "$envCounter";
             }
@@ -86,7 +86,7 @@ class tagHooks
 
             // 如果是tikzcd标签, 并且没有找到tag="true"或者id="xxx"这样的属性, 表示这个标签不需要被编号, 直接原路返回
             // 必须把匹配程序放在&&前面, 使得一定执行这个匹配, 否则下面的$matchesAttr就不会有结果.
-            if( (!preg_match('/ tag="[ ]*true[ ]*"| id="([ \w]*)"/', $attr, $matchesAttr)) && ($matches[1] == 'tikzcd') )
+            if( (!preg_match('/ tag="[ ]*true[ ]*"| id="([ \w-\.]*)"/', $attr, $matchesAttr)) && ($matches[1] == 'tikzcd') )
             {
                 return $matches[0];
             }
