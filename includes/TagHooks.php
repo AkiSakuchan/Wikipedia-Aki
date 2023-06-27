@@ -85,7 +85,7 @@ class tagHooks
         function($matches) use(&$rightCounter, &$idNumber): string
         {
             $attr = $matches[2];
-            if( strlen($attr) == 0 || (strlen($attr) > 0 && $attr[0] != ' '))
+            if( strlen($attr) > 0 && $attr[0] != ' ' )
             {
                 return $matches[0];
             }
