@@ -316,12 +316,15 @@ class tagHooks
         }
         
         $id = $args['id'];
-        if(!array_key_exists($id, self::$crossRefData))
+        if(array_key_exists($id, self::$crossRefData))
         {
-            return "标识符 $id 不存在";
+            $tag = self::$crossRefData[$id] ;
+        }
+        else
+        {
+            $tag = urldecode($id);
         }
 
-        $tag = self::$crossRefData[$id];
         if( array_key_exists($id, self::$crossRefTitle) )
         {
             $title = self::$crossRefTitle[$id];
