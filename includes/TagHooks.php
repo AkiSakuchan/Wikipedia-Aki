@@ -5,8 +5,8 @@
 
 class tagHooks
 {
-    private static $crossRefData = array();
-    private static $crossRefTitle = array();
+    private static $crossRefData = array();     // 用来储存引用编号
+    private static $crossRefTitle = array();    // 用来储存"定理", "定义"等字符串.
 
     public static function onParserFirstCallInit( Parser $parser)
     {
@@ -44,9 +44,16 @@ class tagHooks
 
         //self::preProcess($parser, $text);
 
+        //把id和#开头的链接id都转化为url编码.
+        $text = preg_replace_callback('/\sid\s*="([\s\.\-\p{Han}àÀâÂéÉèÈëËêÊïÏîÎôÔöÖùÙüÜûÛÿŸçÇß\w]+)"/u',
+        function($matches): string
+        {
+            return ' id="' . urlencode($matches[1]) . '"';
+        },
+        $text);
+
         $envCounter = 1;
         $idNumber = array();
-        $source = $text;
 
         $text = preg_replace_callback('/<(lemma|theorem|proposition|corollary|remark|example|definition)([^>]*)>/',
         function($matches) use(&$envCounter, &$idNumber): string
@@ -60,7 +67,7 @@ class tagHooks
             }
 
             //寻找id="xxx"这样的id标签, 如果找到就设置数组之后记录到类里面.
-            if( preg_match('/ id="([ \w-\.]*)"/', $attr, $matchesAttr) )
+            if( preg_match('/\sid="([\%\.\-\+\w]+)"/', $attr, $matchesAttr) )
             {
                 $idNumber[$matchesAttr[1]] = "$envCounter";
             }
@@ -70,9 +77,8 @@ class tagHooks
             $envCounter++;
             return $ret;
         },
-        $source);
+        $text);
 
-        $source = $text;
         $rightCounter = 1;
 
         $text = preg_replace_callback('/<(tikzcd|math)([^>]*)>/',
@@ -86,7 +92,7 @@ class tagHooks
 
             // 如果是tikzcd标签, 并且没有找到tag="true"或者id="xxx"这样的属性, 表示这个标签不需要被编号, 直接原路返回
             // 必须把匹配程序放在&&前面, 使得一定执行这个匹配, 否则下面的$matchesAttr就不会有结果.
-            if( (!preg_match('/ tag="[ ]*true[ ]*"| id="([ \w-\.]*)"/', $attr, $matchesAttr)) && ($matches[1] == 'tikzcd') )
+            if( (!preg_match('/\sid="([\%\.\-\+\w]+)"|\stag="\s*true\s*"/', $attr, $matchesAttr)) && ($matches[1] == 'tikzcd') )
             {
                 return $matches[0];
             }
@@ -95,7 +101,7 @@ class tagHooks
                 $ret = '<' . $matches[1] . $attr . ' temp="' . "$rightCounter" . '">';
 
                 // 如果还存在id="xxx"这样的标签, 则记录
-                if( strlen($matchesAttr[1]) > 0)
+                if( array_key_exists(1, $matchesAttr) )
                 {
                     $idNumber[$matchesAttr[1]] = "$rightCounter";
                 }
@@ -104,7 +110,7 @@ class tagHooks
                 return $ret;
             }
         },
-        $source);
+        $text);
 
         // 把找到的id和编号的对应关系放到类属性里面
         // 由于这个钩子可能会被调用多次, 即使之前添加了判断也无法完全避免未知执行,
@@ -253,7 +259,6 @@ class tagHooks
             if( array_key_exists('id', $args) )
             {
                 $div->setAttribute('id', $args['id']);
-                self::$crossRefTitle[$args['id']] = '';
             }
         }
 
@@ -292,7 +297,6 @@ class tagHooks
         if(array_key_exists('id', $args))
         {
             $div->setAttribute('id', $args['id']);
-            self::$crossRefTitle[$args['id']] = '';
         }
         $dom->appendChild($div);
 
@@ -317,15 +321,17 @@ class tagHooks
             return "标识符 $id 不存在";
         }
 
-        $title = self::$crossRefTitle[$id];
         $tag = self::$crossRefData[$id];
-        if(strlen($title) > 0)
+        if( array_key_exists($id, self::$crossRefTitle) )
         {
-            return $parser->recursiveTagParse('[[#' . $id . '|' . $title. ' ' . $tag . ' ]]',$frame);
+            $title = self::$crossRefTitle[$id];
+            $ret = '<a href="#' . $id .'">' . $title . ' '. $tag . ' </a>';
+            return [$ret, 'markerType' => 'nowiki'];
         }
         else
         {
-            return $parser->recursiveTagParse('[[#'. $id . '|' . '(' . $tag . ')]]', $frame);
+            $ret = '<a href="#' . $id . '">' . ' (' . $tag . ') </a>';
+            return [$ret, 'markerType' => 'nowiki'];
         }
     }
 }
