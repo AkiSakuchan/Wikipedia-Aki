@@ -142,7 +142,7 @@ class tagHooks
         $source_hash = hash('md5', $source_code);
 
         $content = $dom->createElement('div', $source_hash);
-        $content->setAttribute('class', 'mw-collapsible-content');
+        $content->setAttribute('class', 'mw-collapsible-content proof-content');
         $div_mw_colla->appendChild($content);
 
         return str_replace($source_hash, $source_code, $dom->saveHTML());

@@ -47,3 +47,10 @@ blockquote.example{
 	justify-content: center;
 	align-items: center;
 }
+
+.proof-content::after{
+	content: "Q.E.D.";
+	font-weight: bolder;
+	display: block;
+	float: right;
+}
