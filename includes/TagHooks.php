@@ -5,8 +5,7 @@
 
 class tagHooks
 {
-    private static $crossRefData = array();     // 用来储存引用编号
-    private static $crossRefTitle = array();    // 用来储存"定理", "定义"等字符串.
+    private static $crossRefData = array();     // 用来储存引用编号和名称
 
     public static function onParserFirstCallInit( Parser $parser)
     {
@@ -69,7 +68,7 @@ class tagHooks
             //寻找id="xxx"这样的id标签, 如果找到就设置数组之后记录到类里面.
             if( preg_match('/\sid="([\%\.\-\+\w]+)"/', $attr, $matchesAttr) )
             {
-                $idNumber[$matchesAttr[1]] = "$envCounter";
+                $idNumber[$matchesAttr[1]] = self::translate($matches[1]) . " $envCounter "; // 同时也把标题, 就是lemma这样的记录下来
             }
 
             // 临时加上一个temp属性, 使得其他自定义标签处理程序能获得编号信息.
@@ -103,7 +102,7 @@ class tagHooks
                 // 如果还存在id="xxx"这样的标签, 则记录
                 if( array_key_exists(1, $matchesAttr) )
                 {
-                    $idNumber[$matchesAttr[1]] = "$rightCounter";
+                    $idNumber[$matchesAttr[1]] = " ($rightCounter) ";
                 }
 
                 $rightCounter++;
@@ -150,40 +149,40 @@ class tagHooks
 
     public static function definitionRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'definition', '定义');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'definition');
     }
 
     public static function theoremRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'theorem', '定理');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'theorem');
     }
 
     public static function propositionRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'proposition', '命题');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'proposition');
     }
 
     public static function corollaryRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'corollary', '推论');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'corollary');
     }
 
     public static function lemmaRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'lemma', '引理');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'lemma');
     }
 
     public static function remarkRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'remark', '注');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'remark');
     }
 
     public static function exampleRender( $input, array $args, Parser $parser, PPFrame $frame)
     {
-        return self::commonEnvironment($input, $args, $parser, $frame, 'example', '例');
+        return self::commonEnvironment($input, $args, $parser, $frame, 'example');
     }
 
-    private static function commonEnvironment( $input, array $args, Parser $parser, PPFrame $frame, string $className, string $title)
+    private static function commonEnvironment( $input, array $args, Parser $parser, PPFrame $frame, string $className)
     {
         $dom = new DOMDocument();
         $blockquote = $dom->createElement('blockquote');
@@ -191,13 +190,12 @@ class tagHooks
         if( array_key_exists('id', $args) )
         {
             $blockquote->setAttribute('id', $args['id']);
-            self::$crossRefTitle[$args['id']] = $title;
         }
         $dom->appendChild($blockquote);
 
         // 构造标题字符串, 在onParserBeforeInternalParse中已经添加了一个临时标签
         $tag = $args['temp'];
-        $titletag = $title . ' ' . "$tag" . ' ';
+        $titletag = self::translate($className) . " $tag ";
         if(array_key_exists('name', $args))
         {
             $titletag .= '(' . $args['name'] . ')';
@@ -222,7 +220,7 @@ class tagHooks
 
     public static function tikzcdRender($input, array $args, Parser $parser, PPFrame $frame)
     {
-        //获得svg图片代码
+        // 本段程序把tikz的代码用httppost发送到127.0.0.1:9292去, 将返回svg图片代码
         $ch = curl_init('http://127.0.0.1');
         $source = array('type' => 'tikzcd', 'tex' => $input);
         if( array_key_exists('option', $args))
@@ -251,7 +249,7 @@ class tagHooks
         {
             // 如果temp属性则添加编号.
             $tag = $args['temp'];
-            $span = $dom->createElement('span', '(' . "$tag" . ')');
+            $span = $dom->createElement('span', "($tag)");
             $span->setAttribute('class', 'right-tag');
 
             $div->appendChild($span);
@@ -301,7 +299,7 @@ class tagHooks
         $dom->appendChild($div);
 
         $tag = $args['temp'];
-        $span = $dom->createElement('span', '(' . $tag . ')');
+        $span = $dom->createElement('span', "($tag)");
         $span->setAttribute('class', 'right-tag');
         $div->appendChild($span);
 
@@ -316,6 +314,7 @@ class tagHooks
         }
         
         $id = $args['id'];
+        $tag = '';
         if(array_key_exists($id, self::$crossRefData))
         {
             $tag = self::$crossRefData[$id] ;
@@ -325,16 +324,40 @@ class tagHooks
             $tag = urldecode($id);
         }
 
-        if( array_key_exists($id, self::$crossRefTitle) )
+        $ret = "<a href=\"#$id\">$tag</a>";
+        return $ret;
+    }
+
+    private static function translate(string $input) : string
+    {
+        if ($input == 'theorem')
         {
-            $title = self::$crossRefTitle[$id];
-            $ret = '<a href="#' . $id .'">' . $title . ' '. $tag . ' </a>';
-            return [$ret, 'markerType' => 'nowiki'];
+            return '定理';
         }
-        else
+        else if ($input == 'lemma')
         {
-            $ret = '<a href="#' . $id . '">' . ' (' . $tag . ') </a>';
-            return [$ret, 'markerType' => 'nowiki'];
+            return '引理';
         }
+        else if ($input == 'proposition')
+        {
+            return '命题';
+        }
+        else if ($input == 'corollary')
+        {
+            return '推论';
+        }
+        else if ($input == 'definition')
+        {
+            return '定义';
+        }
+        else if ($input == 'example')
+        {
+            return '例';
+        }
+        else if ($input == 'remark')
+        {
+            return '注';
+        }
+        else return '';
     }
 }
