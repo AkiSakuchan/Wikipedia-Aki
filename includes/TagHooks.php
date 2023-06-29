@@ -325,7 +325,7 @@ class tagHooks
         }
 
         $ret = "<a href=\"#$id\">$tag</a>";
-        return $ret;
+        return [$ret, 'markerType' => 'nowiki'];
     }
 
     private static function translate(string $input) : string
