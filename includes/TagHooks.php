@@ -1,11 +1,16 @@
 <?php
 
-//use MediaWiki\Shell\Shell;
-//use MediaWiki\Logger\LoggerFactory;
+use MediaWiki\MediaWikiServices;
 
 class tagHooks
 {
     private static $crossRefData = array();     // 用来储存引用编号和名称
+
+    public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater)
+    {
+        $dir = dirname(__DIR__);
+        $updater->addExtensionTable('cross_pages_references', "$dir/sql/init.sql");
+    }
 
     public static function onParserFirstCallInit( Parser $parser)
     {
@@ -28,6 +33,9 @@ class tagHooks
 
     public static function onParserBeforeInternalParse(Parser &$parser, &$text, &$strip_state)
     {
+        static $execed = false; // 用于避免重复执行, 重复解析已经部分解析后的数据, 这样除了会造成速度降低外还会破坏第一次获得的引用数据;
+        if($execed == true) return true;
+
         // 若正在解析系统消息, 比如最近修改时间等, 就不执行后续操作直接通过
         if( $parser->getOptions()->getInterfaceMessage())
         {
@@ -117,6 +125,26 @@ class tagHooks
         if(count($idNumber) > 0)
         {
             self::$crossRefData = $idNumber;
+            $execed = true;
+
+            // 把本页面的引用数据放到数据库里, 以便其他页面的解析器能生成引用
+            $titleUrlString = urlencode($title);
+            $dbProvider = MediaWikiServices::getInstance()->getDBLoadBalancer();
+            $dbw = $dbProvider->getConnection( DB_PRIMARY );
+            $dbw->delete( 'cross_pages_references' , ['page_title' => $titleUrlString]);
+            foreach( $idNumber as $id => $tag )
+            {
+                if( false == $dbw->insert('cross_pages_references',
+                [
+                    'page_title' => $titleUrlString,
+                    'label' => $id,
+                    'display_tag' => $tag
+                ]))
+                {
+                    echo "插入($title, $id, $tag)失败";
+                    break;
+                }
+            }
         }
 
         return true;
@@ -312,19 +340,44 @@ class tagHooks
         {
             return "\n没有指定引用标识符\n";
         }
-        
-        $id = $args['id'];
+        $id = $args['id'];  // URL字符串
+        $page = '';
         $tag = '';
-        if(array_key_exists($id, self::$crossRefData))
+        $ret = '';
+
+        if(array_key_exists('page', $args))
         {
-            $tag = self::$crossRefData[$id] ;
+            $page = urlencode($args['page']);
+            $readableTitle = $args['page'];
+
+            $dbProvider = MediaWikiServices::getInstance()->getDBLoadBalancer();
+            $dbr = $dbProvider->getConnection( DB_REPLICA );
+
+            $result = $dbr->newSelectQueryBuilder()
+                            ->select( 'display_tag' )
+                            ->from( 'cross_pages_references' )
+                            ->where( [
+                                'page_title' => $page,
+                                'label' => $id
+                            ])
+                            ->caller( __METHOD__ )->fetchField();
+            
+            $ret = "<a href=\"/index.php?title=$page#$id\" title=\"$readableTitle\">$readableTitle $result</a>";
         }
         else
         {
-            $tag = urldecode($id);
-        }
+            if(array_key_exists($id, self::$crossRefData))
+            {
+                $tag = self::$crossRefData[$id] ;
+            }
+            else
+            {
+                $tag = urldecode($id);
+            }
 
-        $ret = "<a href=\"#$id\">$tag</a>";
+            $ret = "<a href=\"#$id\">$tag</a>";
+        }
+        
         return [$ret, 'markerType' => 'nowiki'];
     }
 
