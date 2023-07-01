@@ -54,3 +54,7 @@ blockquote.example{
 	display: block;
 	float: right;
 }
+
+.mw-editsection{
+	display: none;
+}
