@@ -49,7 +49,7 @@ class tagHooks
             return true;
         }
 
-        //self::preProcess($parser, $text);
+        self::preProcess($parser, $text);   // 替换一些字符.
 
         //把id和#开头的链接id都转化为url编码.
         $text = preg_replace_callback('/\sid\s*="([\s\.\-\p{Han}àÀâÂéÉèÈëËêÊïÏîÎôÔöÖùÙüÜûÛÿŸçÇß\w]+)"/u',
@@ -412,5 +412,37 @@ class tagHooks
             return '注';
         }
         else return '';
+    }
+
+    private static function preProcess(Parser &$parser, string &$text)
+    {
+        $replace = array(
+            'R' => '\mathbb{R}',
+            'Cpx' => '\mathbb{C}',
+            'Z' => '\mathbb{Z}',
+            'H' => '\mathbb{H}',
+            'Hom' =>    '\operatorname{Hom}',
+            'GL' =>     '\operatorname{GL}',
+            'SL' =>     '\operatorname{SL}',
+            'O'  =>    '\operatorname{O}',
+            'SO' =>     '\operatorname{SO}',
+            'U' =>      '\operatorname{U}',
+            'SU' =>     '\operatorname{SU}',
+            'Sp' =>     '\operatorname{Sp}',
+            'gl' =>    '\mathfrak{gl}',
+            'sl' =>     '\mathfrak{sl}',
+            'o' =>      '\mathfrak{o}',
+            'so' =>     '\mathfrak{so}',
+            'u' =>      '\mathfrak{u}',
+            'su' =>     '\mathfrak{su}',
+            'sp' =>     '\mathfrak{sp}',
+            'Pic' =>    '\operatorname{Pic}',
+            'NS' =>     '\operatorname{NS}'
+        );
+
+        foreach($replace as $key => $value )
+        {
+            $text = preg_replace("/\\\\$key([_\\W])/", "\\$value$1", $text);
+        }
     }
 }
