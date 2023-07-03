@@ -361,8 +361,15 @@ class tagHooks
                                 'label' => $id
                             ])
                             ->caller( __METHOD__ )->fetchField();
-            
-            $ret = "<a href=\"/index.php?title=$page#$id\" title=\"$readableTitle\">$readableTitle $result</a>";
+
+            if( strlen($result) > 0 )
+            {
+                $ret = "<a href=\"/index.php?title=$page#$id\" title=\"$readableTitle\">$readableTitle $result</a>";
+            }
+            else
+            {
+                return $parser->recursiveTagParse("[[$readableTitle]]");
+            }
         }
         else
         {
