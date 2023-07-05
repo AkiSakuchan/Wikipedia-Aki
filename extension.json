@@ -3,10 +3,10 @@
     "author": "Aki",
     "description": "转化LaTeX代码为html.",
     "version": "1.49",
-    "license-name": "GPL-3.0",
+    "license-name": "Mozilla v2.0",
     "manifest_version": 2,
     "requires":{
-        "MediaWiki": ">=1.35"
+        "MediaWiki": ">=1.39"
     },
     "AutoloadClasses": {
         "scriptStyleHooks": "includes/scriptStyleHooks.php",
