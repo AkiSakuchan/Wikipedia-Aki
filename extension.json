@@ -26,11 +26,11 @@
                 "environmentStyles.css"
             ]
         },
-        "ext.mathJax":{
+        "ext.katexStyle":{
             "localBasePath": "resources",
             "targets": ["desktop", "mobile"],
-            "packageFiles":[
-                "load-mathjax.js"
+            "styles":[
+                "katex.css"
             ]
         }
     }

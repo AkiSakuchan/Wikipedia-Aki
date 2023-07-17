@@ -15,6 +15,7 @@ class tagHooks
     public static function onParserFirstCallInit( Parser $parser)
     {
         $parser->setHook( 'math', [ self::class, 'mathRender']);
+        $parser->setHook( 'yamath', [ self::class, 'yamathRender']);
         $parser->setHook( 'tikzcd', [ self::class, 'tikzcdRender']);
 
         $parser->setHook( 'definition', [self::class, 'definitionRender']);
@@ -49,7 +50,43 @@ class tagHooks
             return true;
         }
 
-        self::preProcess($parser, $text);   // 替换一些字符.
+        self::preProcess($text);   // 替换一些字符.
+
+        // 把$换成<ymath display="false">标签
+        $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$(?!\$)/',
+        function($matches): string
+        {
+            static $state = true;
+            if($state)
+            {
+                $state = false;
+                return '<yamath display="false">';
+            }
+            else
+            {
+                $state = true;
+                return '</yamath>';
+            }
+        },
+        $text);
+
+        // 把$$替换成<ymath display="true">标签
+        $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$\$(?!\$)/',
+        function($matches): string
+        {
+            static $state = true;
+            if($state)
+            {
+                $state = false;
+                return '<yamath display="true">';
+            }
+            else
+            {
+                $state = true;
+                return '</yamath>';
+            }
+        },
+        $text);
 
         //把id和#开头的链接id都转化为url编码.
         $text = preg_replace_callback('/\sid\s*="([\s\.\-\p{Han}àÀâÂéÉèÈëËêÊïÏîÎôÔöÖùÙüÜûÛÿŸçÇß\w]+)"/u',
@@ -263,8 +300,8 @@ class tagHooks
         ));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json;'));
         $svg_xml = curl_exec($ch);
-        if($svg_xml == '') return $input . "\n";
         curl_close($ch);
+        if($svg_xml == '') return $input . "\n";
 
         $svg_hash = hash('md5', $svg_xml);  // 依然是通过获取哈希值, 填入html元素中, 最后替换的方式, 避免PHP的DOM解析错误.
 
@@ -308,15 +345,42 @@ class tagHooks
         return [str_replace($svg_hash, $svg_xml, $dom->saveHTML()), 'markerType' => 'nowiki'];
     }
 
+    private static function realMathRender(string $input, bool $displayMode):string
+    {
+        $ch = curl_init('http://127.0.0.1');
+        curl_setopt_array($ch, array(
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_PORT => 1200,
+            CURLOPT_POSTFIELDS => json_encode(array( 'displayMode' => $displayMode, 'tex' => $input ))
+        ));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json;'));
+        $result = curl_exec($ch);
+        if($result == '') 
+        {
+            $result = $input;
+        }
+        curl_close($ch);
+        return $result;
+    }
+
+    public static function yamathRender( string $input, array $args, Parser $parser, PPFrame $frame)
+    {
+        if($args['display'] == 'true' )
+        {
+            return [self::realMathRender($input, true), 'markerType' => 'nowiki' ];
+        }
+        else
+        {
+            return [self::realMathRender($input, false), 'markerType' => 'nowiki' ];
+        }
+    }
     public static function mathRender($input, array $args, Parser $parser, PPFrame $frame)
     {
         // 生成编号公式.
         $dom = new DOMDocument();
 
-        // 因为直接用输入字符串创建div会导致DOM组件识别到&之类的在TeX中很常见的符号时出错, 但是又需要把这些字符直接传递给客户端进行数学解析
-        // 因此先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值.
-        $source_code = '$$' . $input . '$$';
-        $source_hash = md5($source_code);
+        $source_hash = md5($input);
 
         $div = $dom->createElement('div', $source_hash);
         $div->setAttribute('class', 'container');
@@ -331,7 +395,7 @@ class tagHooks
         $span->setAttribute('class', 'right-tag');
         $div->appendChild($span);
 
-        return [str_replace($source_hash, $source_code, $dom->saveHTML()), 'markerType' => 'nowiki'];
+        return [str_replace($source_hash, self::realMathRender($input, true), $dom->saveHTML()), 'markerType' => 'nowiki'];
     }
 
     public static function crefRender($input, array $args, Parser $parser, PPFrame $frame)
@@ -421,7 +485,7 @@ class tagHooks
         else return '';
     }
 
-    private static function preProcess(Parser &$parser, string &$text)
+    private static function preProcess(string &$text)
     {
         $replace = array(
             'R' => 'mathbb{R}',
