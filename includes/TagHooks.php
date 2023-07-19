@@ -52,41 +52,53 @@ class tagHooks
             return true;
         }
 
-        // 把$换成<ymath display="false">标签
-        $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$(?!\$)/',
-        function($matches): string
+        // 在文档中搜索是否有<no replace dollar>如果有则不替换 $ 和 $$.
+        $isReplaceSharp = true;
+        $text = preg_replace_callback('/<no replace dollar>/',
+        function($matches) use(&$isReplaceSharp) : string
         {
-            static $state = true;
-            if($state)
-            {
-                $state = false;
-                return '<yamath display="false">';
-            }
-            else
-            {
-                $state = true;
-                return '</yamath>';
-            }
-        },
-        $text);
+            $isReplaceSharp = false;
+            return '';
+        }, $text);
 
-        // 把$$替换成<ymath display="true">标签
-        $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$\$(?!\$)/',
-        function($matches): string
+        if($isReplaceSharp)
         {
-            static $state = true;
-            if($state)
+            // 把$换成<yamath display="false">标签
+            $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$(?!\$)/',
+            function($matches): string
             {
-                $state = false;
-                return '<yamath display="true">';
-            }
-            else
+                static $state = true;
+                if($state)
+                {
+                    $state = false;
+                    return '<yamath display="false">';
+                }
+                else
+                {
+                    $state = true;
+                    return '</yamath>';
+                }
+            },
+            $text);
+
+            // 把$$替换成<yamath display="true">标签
+            $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$\$(?!\$)/',
+            function($matches): string
             {
-                $state = true;
-                return '</yamath>';
-            }
-        },
-        $text);
+                static $state = true;
+                if($state)
+                {
+                    $state = false;
+                    return '<yamath display="true">';
+                }
+                else
+                {
+                    $state = true;
+                    return '</yamath>';
+                }
+            },
+            $text);
+        }
 
         //把id和#开头的链接id都转化为url编码.
         $text = preg_replace_callback('/\sid\s*="([\s\.\-\p{Han}àÀâÂéÉèÈëËêÊïÏîÎôÔöÖùÙüÜûÛÿŸçÇß\w]+)"/u',
@@ -199,9 +211,9 @@ class tagHooks
         $title->setAttribute('class', 'env-title');    // 将在css中控制env-title的样式
         $div_mw_colla->appendChild($title);
 
-        // 因为直接用输入字符串创建div会导致DOM组件识别到&之类的常见符号时出错, 但是又需要把这些字符直接传递给客户端进行数学解析等
-        // 因此先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值.
-        // 同时直接用PHP的DOM解析wiki解析成的代码也会出现乱码(需要转换为HTML的编码), 因此用替换的方式也可以避免这个问题
+        // 先计算输入字符串的哈希值, 填充div, 最后用原本的字符串替换这个哈希值, 相当于修改innerHTML, 较为危险,
+        // 但是这里的代码是wiki解析程序输出的, 不会引入额外的危险.
+        // 另外直接用PHP的DOM解析wiki解析成的代码也会出现乱码(需要转换为HTML的编码), 因此用替换的方式也可以避免这个问题
         $source_code = $parser->recursiveTagParse($input, $frame);
         $source_hash = hash('md5', $source_code);
 
