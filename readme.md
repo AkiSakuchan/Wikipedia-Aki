@@ -3,7 +3,7 @@
 [tikz2svg](https://github.com/banana-space/tikz2svg).
 
 本项目是一个[MediaWiki](https://www.mediawiki.org/wiki/MediaWiki)插件,
-实现了自动生成定理样式(配色也一样), 定理和公式的自动编号, 自动生成引用和跨页面引用的链接.
+实现了自动生成定理样式(配色也和香蕉空间一样), 定理和公式的自动编号, 自动生成引用和跨页面引用的链接.
 但是实现方式与香蕉空间完全不同, 目前标记语言也基于Wiki标记语言, 但是添加了几个标签.
 
 未来将支持写LaTeX代码来实现前面的功能.
