@@ -93,6 +93,36 @@ C \ar[r] & D
 
 如果要在其他地方引用这些定理环境, 可以给标签加上```id```属性, 就像交换图和行间公式一样.
 
+## 可折叠证明
+使用```<proofc>```标签可以把证明内容默认收起来, 不影响整体阅读.
+
+## 预定义常量
+本扩展定义了一些最常用的替换:
+```PHP
+'R' => 'mathbb{R}',
+'Cpx' => 'mathbb{C}',
+'Z' => 'mathbb{Z}',
+'H' => 'mathbb{H}',
+'Hom' =>    'operatorname{Hom}',
+'GL' =>     'operatorname{GL}',
+'SL' =>     'operatorname{SL}',
+'O'  =>    'operatorname{O}',
+'SO' =>     'operatorname{SO}',
+'U' =>      'operatorname{U}',
+'SU' =>     'operatorname{SU}',
+'Sp' =>     'operatorname{Sp}',
+'gl' =>    'mathfrak{gl}',
+'sl' =>     'mathfrak{sl}',
+'o' =>      'mathfrak{o}',
+'so' =>     'mathfrak{so}',
+'u' =>      'mathfrak{u}',
+'su' =>     'mathfrak{su}',
+'sp' =>     'mathfrak{sp}',
+'Pic' =>    'operatorname{Pic}',
+'NS' =>     'operatorname{NS}'
+```
+因此使用```\R```即可表示```\mathbb{R}```, 当然上面的替换只在数学环境中有用.
+
 ## 引用
 可以使用```<cref>```标签来引用其他地方的行间公式, 交换图, 定理等(不论```<cref>```在它们前面还是后面).
 比如要引用前面的定理, 可以使用```<cref id="单点紧化" />```来生成引用链接和文字. 注意不要漏掉```/```, 否则就得使用```</cref>```关闭标签:
