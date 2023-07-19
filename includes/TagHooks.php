@@ -6,6 +6,8 @@ class tagHooks
 {
     private static $crossRefData = array();     // 用来储存引用编号和名称
 
+    private static $socketPath = '/tmp/php-js.sock';
+
     public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater)
     {
         $dir = dirname(__DIR__);
@@ -49,8 +51,6 @@ class tagHooks
         {
             return true;
         }
-
-        self::preProcess($text);   // 替换一些字符.
 
         // 把$换成<ymath display="false">标签
         $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$(?!\$)/',
@@ -287,6 +287,7 @@ class tagHooks
     {
         // 本段程序把tikz的代码用httppost发送到127.0.0.1:9292去, 将返回svg图片代码
         $ch = curl_init('http://127.0.0.1');
+        self::preProcess($input);
         $source = array('type' => 'tikzcd', 'tex' => $input);
         if( array_key_exists('option', $args))
         {
@@ -345,23 +346,37 @@ class tagHooks
         return [str_replace($svg_hash, $svg_xml, $dom->saveHTML()), 'markerType' => 'nowiki'];
     }
 
-    private static function realMathRender(string $input, bool $displayMode):string
+    private static function realMathRender(string $tex, bool $display): string
     {
-        $ch = curl_init('http://127.0.0.1');
-        curl_setopt_array($ch, array(
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_PORT => 1200,
-            CURLOPT_POSTFIELDS => json_encode(array( 'displayMode' => $displayMode, 'tex' => $input ))
-        ));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json;'));
-        $result = curl_exec($ch);
-        if($result == '') 
+        self::preProcess($tex);   // 替换一些字符.
+
+        $socket = socket_create(AF_UNIX, SOCK_STREAM, 0);
+        if( $socket == false )
         {
-            $result = $input;
+            echo '创建套接字失败';
         }
-        curl_close($ch);
-        return $result;
+        if(!socket_connect($socket, self::$socketPath))
+        {
+            echo '无法连接套接字';
+        }
+
+        $send = json_encode(array('display'=> $display, 'tex'=> $tex));
+        if( socket_write($socket, $send) === false )
+        {
+            return '数据写入失败';
+        }
+        socket_shutdown($socket, 1); // 关闭套接字写入, 把发送end信号给服务端.
+
+        // 循环读取套接字中的信息, 避免遗漏
+        $html = '';
+        do
+        {
+            $part = socket_read($socket, 10240);
+            $html .= $part;
+        }while(strlen($part) > 0);
+
+        socket_close($socket);
+        return $html;
     }
 
     public static function yamathRender( string $input, array $args, Parser $parser, PPFrame $frame)
@@ -432,7 +447,7 @@ class tagHooks
             }
             else
             {
-                return $parser->recursiveTagParse("[[$readableTitle]]");
+                return $parser->recursiveTagParse("[[$readableTitle]]", $frame);
             }
         }
         else
