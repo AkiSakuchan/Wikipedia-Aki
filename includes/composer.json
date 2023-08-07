@@ -1,0 +1,18 @@
+{
+    "name": "vendor/parser",
+    "description": "Convert partial LaTeX to WikiMarker",
+    "type": "library",
+    "license": "Mozilla v2.0",
+    "authors": [
+        {
+            "name": "Aki"
+        }
+    ],
+    "minimum-stability": "RC",
+    "require": {
+        "antlr/antlr4-php-runtime": "^0.9.0"
+    },
+    "autoload": {
+        "classmap": ["./"]
+    }
+}
