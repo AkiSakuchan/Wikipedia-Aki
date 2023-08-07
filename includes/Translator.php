@@ -12,11 +12,25 @@ class Listener extends atexBaseListener
 
     public function enterCommand(Context\CommandContext $ctx):void
     {
-        echo $ctx->getText();
+    }
+    public function exitCommand(Context\CommandContext $ctx):void
+    {
+        echo $ctx->COMMAND()->getText();
+        echo "\n";
+    }
+
+    public function exitMath_display(Context\Math_displayContext $ctx):void
+    {
+        echo '<yamath display="true">' . $ctx->in_math()->getText() . '</yamath>';
+    }
+
+    public function exitStart(Context\StartContext $ctx):void
+    {
+        //echo $ctx->getText();
     }
 }
 
-$text = '\frac{1}{2}';
+$text = '$$\frac{ 3 }{ \rome \a_{2} }$$';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);

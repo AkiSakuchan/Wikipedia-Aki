@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Generated from atex.g4 by ANTLR 4.13.0
+ * Generated from atex.g4 by ANTLR 4.12.0
  */
 
 
@@ -81,6 +81,45 @@ class atexBaseListener implements atexListener
 	 * The default implementation does nothing.
 	 */
 	public function exitEnv_body(Context\Env_bodyContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterMath_inline(Context\Math_inlineContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitMath_inline(Context\Math_inlineContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterMath_display(Context\Math_displayContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitMath_display(Context\Math_displayContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterIn_math(Context\In_mathContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitIn_math(Context\In_mathContext $context): void {}
 
 	/**
 	 * {@inheritdoc}
