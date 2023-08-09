@@ -6,38 +6,23 @@ use Antlr\Antlr4\Runtime\InputStream;
 
 class Listener extends atexBaseListener
 {
-    private string $out;
+    public string $out;
+
+    private string $current_out;
 
     private string $id;
 
-    public function enterCommand(Context\CommandContext $ctx):void
+    public function enterStart(Context\StartContext $ctx):void
     {
+        $this->current_out = '';
     }
-    public function exitCommand(Context\CommandContext $ctx):void
-    {
-        //echo $ctx->getText();
-        //echo "\n";
-    }
-
-    public function exitOption_real_arg(Context\Option_real_argContext $ctx):void
-    {
-        echo $ctx->getText();
-        echo "1\n";
-    }
-
-    public function exitNecessary_real_arg(Context\Necessary_real_argContext $ctx):void
-    {
-        echo $ctx->getText();
-        echo "2\n";
-    }
-
     public function exitStart(Context\StartContext $ctx):void
     {
-        //echo $ctx->getText();
+        $this->out .= $this->current_out;
     }
 }
 
-$text = '\frac[acdd]{ ABC }';
+$text = '\fr{bbb $()^_a{}$ aaa $_[]$}';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);

@@ -22,6 +22,16 @@ interface atexListener extends ParseTreeListener {
 	 */
 	public function exitStart(Context\StartContext $context): void;
 	/**
+	 * Enter a parse tree produced by {@see atexParser::multi_plain_text()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterMulti_plain_text(Context\Multi_plain_textContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see atexParser::multi_plain_text()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitMulti_plain_text(Context\Multi_plain_textContext $context): void;
+	/**
 	 * Enter a parse tree produced by {@see atexParser::command()}.
 	 * @param $context The parse tree.
 	 */
@@ -51,6 +61,26 @@ interface atexListener extends ParseTreeListener {
 	 * @param $context The parse tree.
 	 */
 	public function exitOption_real_arg(Context\Option_real_argContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see atexParser::newcommand()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterNewcommand(Context\NewcommandContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see atexParser::newcommand()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitNewcommand(Context\NewcommandContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see atexParser::define_args()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterDefine_args(Context\Define_argsContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see atexParser::define_args()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitDefine_args(Context\Define_argsContext $context): void;
 	/**
 	 * Enter a parse tree produced by {@see atexParser::environment()}.
 	 * @param $context The parse tree.

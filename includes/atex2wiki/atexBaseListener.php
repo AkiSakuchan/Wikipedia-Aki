@@ -34,6 +34,19 @@ class atexBaseListener implements atexListener
 	 *
 	 * The default implementation does nothing.
 	 */
+	public function enterMulti_plain_text(Context\Multi_plain_textContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitMulti_plain_text(Context\Multi_plain_textContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
 	public function enterCommand(Context\CommandContext $context): void {}
 
 	/**
@@ -68,6 +81,32 @@ class atexBaseListener implements atexListener
 	 * The default implementation does nothing.
 	 */
 	public function exitOption_real_arg(Context\Option_real_argContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterNewcommand(Context\NewcommandContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitNewcommand(Context\NewcommandContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterDefine_args(Context\Define_argsContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitDefine_args(Context\Define_argsContext $context): void {}
 	/**
 	 * {@inheritdoc}
 	 *
