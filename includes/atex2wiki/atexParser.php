@@ -24,19 +24,20 @@ namespace {
 	final class atexParser extends Parser
 	{
 		public const T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, 
-               T__6 = 7, T__7 = 8, LETTERS = 9, COMMAND = 10, PLAIN_TEXT = 11, 
-               WS = 12;
+               T__6 = 7, T__7 = 8, PLAIN_TEXT = 9, BRACKET = 10, LETTERS = 11, 
+               DIGIT = 12, COMMAND = 13;
 
-		public const RULE_start = 0, RULE_command = 1, RULE_real_args = 2, RULE_environment = 3, 
-               RULE_env_body = 4, RULE_math_inline = 5, RULE_math_display = 6, 
-               RULE_in_math = 7;
+		public const RULE_start = 0, RULE_command = 1, RULE_necessary_real_arg = 2, 
+               RULE_option_real_arg = 3, RULE_environment = 4, RULE_env_body = 5, 
+               RULE_math_inline = 6, RULE_math_display = 7, RULE_in_math_inline = 8, 
+               RULE_in_math_display = 9;
 
 		/**
 		 * @var array<string>
 		 */
 		public const RULE_NAMES = [
-			'start', 'command', 'real_args', 'environment', 'env_body', 'math_inline', 
-			'math_display', 'in_math'
+			'start', 'command', 'necessary_real_arg', 'option_real_arg', 'environment', 
+			'env_body', 'math_inline', 'math_display', 'in_math_inline', 'in_math_display'
 		];
 
 		/**
@@ -51,51 +52,65 @@ namespace {
 		 * @var array<string>
 		 */
 		private const SYMBOLIC_NAMES = [
-		    null, null, null, null, null, null, null, null, null, "LETTERS", "COMMAND", 
-		    "PLAIN_TEXT", "WS"
+		    null, null, null, null, null, null, null, null, null, "PLAIN_TEXT", 
+		    "BRACKET", "LETTERS", "DIGIT", "COMMAND"
 		];
 
 		private const SERIALIZED_ATN =
-			[4, 1, 12, 91, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 
-		    7, 4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 1, 0, 1, 0, 1, 0, 1, 0, 
-		    1, 0, 3, 0, 22, 8, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 29, 8, 1, 
-		    1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 35, 8, 1, 10, 1, 12, 1, 38, 9, 1, 1, 
-		    2, 1, 2, 5, 2, 42, 8, 2, 10, 2, 12, 2, 45, 9, 2, 1, 3, 1, 3, 1, 3, 
-		    1, 3, 1, 3, 1, 3, 1, 3, 3, 3, 54, 8, 3, 1, 3, 1, 3, 1, 3, 1, 3, 5, 
-		    3, 60, 8, 3, 10, 3, 12, 3, 63, 9, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 
-		    1, 4, 1, 4, 1, 4, 5, 4, 73, 8, 4, 10, 4, 12, 4, 76, 9, 4, 1, 5, 1, 
-		    5, 1, 5, 1, 5, 1, 6, 1, 6, 1, 6, 1, 6, 1, 7, 1, 7, 1, 7, 3, 7, 89, 
-		    8, 7, 1, 7, 0, 0, 8, 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 97, 0, 21, 1, 
-		    0, 0, 0, 2, 23, 1, 0, 0, 0, 4, 43, 1, 0, 0, 0, 6, 46, 1, 0, 0, 0, 
-		    8, 74, 1, 0, 0, 0, 10, 77, 1, 0, 0, 0, 12, 81, 1, 0, 0, 0, 14, 88, 
-		    1, 0, 0, 0, 16, 22, 5, 11, 0, 0, 17, 22, 3, 2, 1, 0, 18, 22, 3, 6, 
-		    3, 0, 19, 22, 3, 10, 5, 0, 20, 22, 3, 12, 6, 0, 21, 16, 1, 0, 0, 0, 
-		    21, 17, 1, 0, 0, 0, 21, 18, 1, 0, 0, 0, 21, 19, 1, 0, 0, 0, 21, 20, 
-		    1, 0, 0, 0, 22, 1, 1, 0, 0, 0, 23, 28, 5, 10, 0, 0, 24, 25, 5, 1, 
-		    0, 0, 25, 26, 3, 4, 2, 0, 26, 27, 5, 2, 0, 0, 27, 29, 1, 0, 0, 0, 
-		    28, 24, 1, 0, 0, 0, 28, 29, 1, 0, 0, 0, 29, 36, 1, 0, 0, 0, 30, 31, 
-		    5, 3, 0, 0, 31, 32, 3, 4, 2, 0, 32, 33, 5, 4, 0, 0, 33, 35, 1, 0, 
-		    0, 0, 34, 30, 1, 0, 0, 0, 35, 38, 1, 0, 0, 0, 36, 34, 1, 0, 0, 0, 
-		    36, 37, 1, 0, 0, 0, 37, 3, 1, 0, 0, 0, 38, 36, 1, 0, 0, 0, 39, 42, 
-		    5, 11, 0, 0, 40, 42, 3, 2, 1, 0, 41, 39, 1, 0, 0, 0, 41, 40, 1, 0, 
-		    0, 0, 42, 45, 1, 0, 0, 0, 43, 41, 1, 0, 0, 0, 43, 44, 1, 0, 0, 0, 
-		    44, 5, 1, 0, 0, 0, 45, 43, 1, 0, 0, 0, 46, 47, 5, 5, 0, 0, 47, 48, 
-		    5, 9, 0, 0, 48, 53, 5, 4, 0, 0, 49, 50, 5, 1, 0, 0, 50, 51, 3, 4, 
-		    2, 0, 51, 52, 5, 2, 0, 0, 52, 54, 1, 0, 0, 0, 53, 49, 1, 0, 0, 0, 
-		    53, 54, 1, 0, 0, 0, 54, 61, 1, 0, 0, 0, 55, 56, 5, 3, 0, 0, 56, 57, 
-		    3, 4, 2, 0, 57, 58, 5, 4, 0, 0, 58, 60, 1, 0, 0, 0, 59, 55, 1, 0, 
-		    0, 0, 60, 63, 1, 0, 0, 0, 61, 59, 1, 0, 0, 0, 61, 62, 1, 0, 0, 0, 
-		    62, 64, 1, 0, 0, 0, 63, 61, 1, 0, 0, 0, 64, 65, 3, 8, 4, 0, 65, 66, 
-		    5, 6, 0, 0, 66, 67, 5, 9, 0, 0, 67, 68, 5, 4, 0, 0, 68, 7, 1, 0, 0, 
-		    0, 69, 73, 5, 11, 0, 0, 70, 73, 3, 2, 1, 0, 71, 73, 3, 6, 3, 0, 72, 
-		    69, 1, 0, 0, 0, 72, 70, 1, 0, 0, 0, 72, 71, 1, 0, 0, 0, 73, 76, 1, 
-		    0, 0, 0, 74, 72, 1, 0, 0, 0, 74, 75, 1, 0, 0, 0, 75, 9, 1, 0, 0, 0, 
-		    76, 74, 1, 0, 0, 0, 77, 78, 5, 7, 0, 0, 78, 79, 3, 14, 7, 0, 79, 80, 
-		    5, 7, 0, 0, 80, 11, 1, 0, 0, 0, 81, 82, 5, 8, 0, 0, 82, 83, 3, 14, 
-		    7, 0, 83, 84, 5, 8, 0, 0, 84, 13, 1, 0, 0, 0, 85, 89, 5, 11, 0, 0, 
-		    86, 89, 3, 2, 1, 0, 87, 89, 3, 6, 3, 0, 88, 85, 1, 0, 0, 0, 88, 86, 
-		    1, 0, 0, 0, 88, 87, 1, 0, 0, 0, 89, 15, 1, 0, 0, 0, 10, 21, 28, 36, 
-		    41, 43, 53, 61, 72, 74, 88];
+			[4, 1, 13, 118, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 
+		    7, 4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 
+		    1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 3, 0, 26, 8, 0, 1, 1, 1, 1, 1, 1, 5, 
+		    1, 31, 8, 1, 10, 1, 12, 1, 34, 9, 1, 1, 1, 3, 1, 37, 8, 1, 1, 1, 1, 
+		    1, 5, 1, 41, 8, 1, 10, 1, 12, 1, 44, 9, 1, 1, 1, 5, 1, 47, 8, 1, 10, 
+		    1, 12, 1, 50, 9, 1, 1, 2, 1, 2, 1, 2, 3, 2, 55, 8, 2, 1, 3, 1, 3, 
+		    3, 3, 59, 8, 3, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 5, 4, 66, 8, 4, 10, 
+		    4, 12, 4, 69, 9, 4, 1, 4, 3, 4, 72, 8, 4, 1, 4, 1, 4, 5, 4, 76, 8, 
+		    4, 10, 4, 12, 4, 79, 9, 4, 1, 4, 5, 4, 82, 8, 4, 10, 4, 12, 4, 85, 
+		    9, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 5, 1, 5, 1, 5, 1, 5, 5, 5, 
+		    96, 8, 5, 10, 5, 12, 5, 99, 9, 5, 1, 6, 1, 6, 1, 6, 1, 6, 1, 7, 1, 
+		    7, 1, 7, 1, 7, 1, 8, 1, 8, 1, 8, 3, 8, 112, 8, 8, 1, 9, 1, 9, 3, 9, 
+		    116, 8, 9, 1, 9, 0, 0, 10, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 0, 0, 
+		    129, 0, 25, 1, 0, 0, 0, 2, 27, 1, 0, 0, 0, 4, 54, 1, 0, 0, 0, 6, 58, 
+		    1, 0, 0, 0, 8, 60, 1, 0, 0, 0, 10, 97, 1, 0, 0, 0, 12, 100, 1, 0, 
+		    0, 0, 14, 104, 1, 0, 0, 0, 16, 111, 1, 0, 0, 0, 18, 115, 1, 0, 0, 
+		    0, 20, 26, 3, 2, 1, 0, 21, 26, 3, 8, 4, 0, 22, 26, 3, 12, 6, 0, 23, 
+		    26, 3, 14, 7, 0, 24, 26, 5, 9, 0, 0, 25, 20, 1, 0, 0, 0, 25, 21, 1, 
+		    0, 0, 0, 25, 22, 1, 0, 0, 0, 25, 23, 1, 0, 0, 0, 25, 24, 1, 0, 0, 
+		    0, 26, 1, 1, 0, 0, 0, 27, 36, 5, 13, 0, 0, 28, 32, 5, 1, 0, 0, 29, 
+		    31, 3, 6, 3, 0, 30, 29, 1, 0, 0, 0, 31, 34, 1, 0, 0, 0, 32, 30, 1, 
+		    0, 0, 0, 32, 33, 1, 0, 0, 0, 33, 35, 1, 0, 0, 0, 34, 32, 1, 0, 0, 
+		    0, 35, 37, 5, 2, 0, 0, 36, 28, 1, 0, 0, 0, 36, 37, 1, 0, 0, 0, 37, 
+		    48, 1, 0, 0, 0, 38, 42, 5, 3, 0, 0, 39, 41, 3, 4, 2, 0, 40, 39, 1, 
+		    0, 0, 0, 41, 44, 1, 0, 0, 0, 42, 40, 1, 0, 0, 0, 42, 43, 1, 0, 0, 
+		    0, 43, 45, 1, 0, 0, 0, 44, 42, 1, 0, 0, 0, 45, 47, 5, 4, 0, 0, 46, 
+		    38, 1, 0, 0, 0, 47, 50, 1, 0, 0, 0, 48, 46, 1, 0, 0, 0, 48, 49, 1, 
+		    0, 0, 0, 49, 3, 1, 0, 0, 0, 50, 48, 1, 0, 0, 0, 51, 55, 5, 9, 0, 0, 
+		    52, 55, 5, 10, 0, 0, 53, 55, 3, 2, 1, 0, 54, 51, 1, 0, 0, 0, 54, 52, 
+		    1, 0, 0, 0, 54, 53, 1, 0, 0, 0, 55, 5, 1, 0, 0, 0, 56, 59, 5, 9, 0, 
+		    0, 57, 59, 3, 2, 1, 0, 58, 56, 1, 0, 0, 0, 58, 57, 1, 0, 0, 0, 59, 
+		    7, 1, 0, 0, 0, 60, 61, 5, 5, 0, 0, 61, 62, 5, 11, 0, 0, 62, 71, 5, 
+		    4, 0, 0, 63, 67, 5, 1, 0, 0, 64, 66, 3, 6, 3, 0, 65, 64, 1, 0, 0, 
+		    0, 66, 69, 1, 0, 0, 0, 67, 65, 1, 0, 0, 0, 67, 68, 1, 0, 0, 0, 68, 
+		    70, 1, 0, 0, 0, 69, 67, 1, 0, 0, 0, 70, 72, 5, 2, 0, 0, 71, 63, 1, 
+		    0, 0, 0, 71, 72, 1, 0, 0, 0, 72, 83, 1, 0, 0, 0, 73, 77, 5, 3, 0, 
+		    0, 74, 76, 3, 4, 2, 0, 75, 74, 1, 0, 0, 0, 76, 79, 1, 0, 0, 0, 77, 
+		    75, 1, 0, 0, 0, 77, 78, 1, 0, 0, 0, 78, 80, 1, 0, 0, 0, 79, 77, 1, 
+		    0, 0, 0, 80, 82, 5, 4, 0, 0, 81, 73, 1, 0, 0, 0, 82, 85, 1, 0, 0, 
+		    0, 83, 81, 1, 0, 0, 0, 83, 84, 1, 0, 0, 0, 84, 86, 1, 0, 0, 0, 85, 
+		    83, 1, 0, 0, 0, 86, 87, 3, 10, 5, 0, 87, 88, 5, 6, 0, 0, 88, 89, 5, 
+		    11, 0, 0, 89, 90, 5, 4, 0, 0, 90, 9, 1, 0, 0, 0, 91, 96, 5, 9, 0, 
+		    0, 92, 96, 5, 10, 0, 0, 93, 96, 3, 2, 1, 0, 94, 96, 3, 8, 4, 0, 95, 
+		    91, 1, 0, 0, 0, 95, 92, 1, 0, 0, 0, 95, 93, 1, 0, 0, 0, 95, 94, 1, 
+		    0, 0, 0, 96, 99, 1, 0, 0, 0, 97, 95, 1, 0, 0, 0, 97, 98, 1, 0, 0, 
+		    0, 98, 11, 1, 0, 0, 0, 99, 97, 1, 0, 0, 0, 100, 101, 5, 7, 0, 0, 101, 
+		    102, 3, 16, 8, 0, 102, 103, 5, 7, 0, 0, 103, 13, 1, 0, 0, 0, 104, 
+		    105, 5, 8, 0, 0, 105, 106, 3, 18, 9, 0, 106, 107, 5, 8, 0, 0, 107, 
+		    15, 1, 0, 0, 0, 108, 112, 5, 9, 0, 0, 109, 112, 5, 10, 0, 0, 110, 
+		    112, 3, 2, 1, 0, 111, 108, 1, 0, 0, 0, 111, 109, 1, 0, 0, 0, 111, 
+		    110, 1, 0, 0, 0, 112, 17, 1, 0, 0, 0, 113, 116, 3, 16, 8, 0, 114, 
+		    116, 3, 8, 4, 0, 115, 113, 1, 0, 0, 0, 115, 114, 1, 0, 0, 0, 116, 
+		    19, 1, 0, 0, 0, 15, 25, 32, 36, 42, 48, 54, 58, 67, 71, 77, 83, 95, 
+		    97, 111, 115];
 		protected static $atn;
 		protected static $decisionToDFA;
 		protected static $sharedContextCache;
@@ -166,38 +181,38 @@ namespace {
 		    $this->enterRule($localContext, 0, self::RULE_start);
 
 		    try {
-		        $this->setState(21);
+		        $this->setState(25);
 		        $this->errorHandler->sync($this);
 
 		        switch ($this->input->LA(1)) {
-		            case self::PLAIN_TEXT:
-		            	$this->enterOuterAlt($localContext, 1);
-		            	$this->setState(16);
-		            	$this->match(self::PLAIN_TEXT);
-		            	break;
-
 		            case self::COMMAND:
-		            	$this->enterOuterAlt($localContext, 2);
-		            	$this->setState(17);
+		            	$this->enterOuterAlt($localContext, 1);
+		            	$this->setState(20);
 		            	$this->command();
 		            	break;
 
 		            case self::T__4:
-		            	$this->enterOuterAlt($localContext, 3);
-		            	$this->setState(18);
+		            	$this->enterOuterAlt($localContext, 2);
+		            	$this->setState(21);
 		            	$this->environment();
 		            	break;
 
 		            case self::T__6:
-		            	$this->enterOuterAlt($localContext, 4);
-		            	$this->setState(19);
+		            	$this->enterOuterAlt($localContext, 3);
+		            	$this->setState(22);
 		            	$this->math_inline();
 		            	break;
 
 		            case self::T__7:
-		            	$this->enterOuterAlt($localContext, 5);
-		            	$this->setState(20);
+		            	$this->enterOuterAlt($localContext, 4);
+		            	$this->setState(23);
 		            	$this->math_display();
+		            	break;
+
+		            case self::PLAIN_TEXT:
+		            	$this->enterOuterAlt($localContext, 5);
+		            	$this->setState(24);
+		            	$this->match(self::PLAIN_TEXT);
 		            	break;
 
 		        default:
@@ -225,32 +240,50 @@ namespace {
 
 		    try {
 		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(23);
+		        $this->setState(27);
 		        $this->match(self::COMMAND);
-		        $this->setState(28);
+		        $this->setState(36);
 		        $this->errorHandler->sync($this);
 		        $_la = $this->input->LA(1);
 
 		        if ($_la === self::T__0) {
-		        	$this->setState(24);
+		        	$this->setState(28);
 		        	$this->match(self::T__0);
-		        	$this->setState(25);
-		        	$this->real_args();
-		        	$this->setState(26);
+		        	$this->setState(32);
+		        	$this->errorHandler->sync($this);
+
+		        	$_la = $this->input->LA(1);
+		        	while ($_la === self::PLAIN_TEXT || $_la === self::COMMAND) {
+		        		$this->setState(29);
+		        		$this->option_real_arg();
+		        		$this->setState(34);
+		        		$this->errorHandler->sync($this);
+		        		$_la = $this->input->LA(1);
+		        	}
+		        	$this->setState(35);
 		        	$this->match(self::T__1);
 		        }
-		        $this->setState(36);
+		        $this->setState(48);
 		        $this->errorHandler->sync($this);
 
 		        $_la = $this->input->LA(1);
 		        while ($_la === self::T__2) {
-		        	$this->setState(30);
-		        	$this->match(self::T__2);
-		        	$this->setState(31);
-		        	$this->real_args();
-		        	$this->setState(32);
-		        	$this->match(self::T__3);
 		        	$this->setState(38);
+		        	$this->match(self::T__2);
+		        	$this->setState(42);
+		        	$this->errorHandler->sync($this);
+
+		        	$_la = $this->input->LA(1);
+		        	while (((($_la) & ~0x3f) === 0 && ((1 << $_la) & 9728) !== 0)) {
+		        		$this->setState(39);
+		        		$this->necessary_real_arg();
+		        		$this->setState(44);
+		        		$this->errorHandler->sync($this);
+		        		$_la = $this->input->LA(1);
+		        	}
+		        	$this->setState(45);
+		        	$this->match(self::T__3);
+		        	$this->setState(50);
 		        	$this->errorHandler->sync($this);
 		        	$_la = $this->input->LA(1);
 		        }
@@ -268,39 +301,77 @@ namespace {
 		/**
 		 * @throws RecognitionException
 		 */
-		public function real_args(): Context\Real_argsContext
+		public function necessary_real_arg(): Context\Necessary_real_argContext
 		{
-		    $localContext = new Context\Real_argsContext($this->ctx, $this->getState());
+		    $localContext = new Context\Necessary_real_argContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 4, self::RULE_real_args);
+		    $this->enterRule($localContext, 4, self::RULE_necessary_real_arg);
 
 		    try {
-		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(43);
+		        $this->setState(54);
 		        $this->errorHandler->sync($this);
 
-		        $_la = $this->input->LA(1);
-		        while ($_la === self::COMMAND || $_la === self::PLAIN_TEXT) {
-		        	$this->setState(41);
-		        	$this->errorHandler->sync($this);
+		        switch ($this->input->LA(1)) {
+		            case self::PLAIN_TEXT:
+		            	$this->enterOuterAlt($localContext, 1);
+		            	$this->setState(51);
+		            	$this->match(self::PLAIN_TEXT);
+		            	break;
 
-		        	switch ($this->input->LA(1)) {
-		        	    case self::PLAIN_TEXT:
-		        	    	$this->setState(39);
-		        	    	$this->match(self::PLAIN_TEXT);
-		        	    	break;
+		            case self::BRACKET:
+		            	$this->enterOuterAlt($localContext, 2);
+		            	$this->setState(52);
+		            	$this->match(self::BRACKET);
+		            	break;
 
-		        	    case self::COMMAND:
-		        	    	$this->setState(40);
-		        	    	$this->command();
-		        	    	break;
+		            case self::COMMAND:
+		            	$this->enterOuterAlt($localContext, 3);
+		            	$this->setState(53);
+		            	$this->command();
+		            	break;
 
-		        	default:
-		        		throw new NoViableAltException($this);
-		        	}
-		        	$this->setState(45);
-		        	$this->errorHandler->sync($this);
-		        	$_la = $this->input->LA(1);
+		        default:
+		        	throw new NoViableAltException($this);
+		        }
+		    } catch (RecognitionException $exception) {
+		        $localContext->exception = $exception;
+		        $this->errorHandler->reportError($this, $exception);
+		        $this->errorHandler->recover($this, $exception);
+		    } finally {
+		        $this->exitRule();
+		    }
+
+		    return $localContext;
+		}
+
+		/**
+		 * @throws RecognitionException
+		 */
+		public function option_real_arg(): Context\Option_real_argContext
+		{
+		    $localContext = new Context\Option_real_argContext($this->ctx, $this->getState());
+
+		    $this->enterRule($localContext, 6, self::RULE_option_real_arg);
+
+		    try {
+		        $this->setState(58);
+		        $this->errorHandler->sync($this);
+
+		        switch ($this->input->LA(1)) {
+		            case self::PLAIN_TEXT:
+		            	$this->enterOuterAlt($localContext, 1);
+		            	$this->setState(56);
+		            	$this->match(self::PLAIN_TEXT);
+		            	break;
+
+		            case self::COMMAND:
+		            	$this->enterOuterAlt($localContext, 2);
+		            	$this->setState(57);
+		            	$this->command();
+		            	break;
+
+		        default:
+		        	throw new NoViableAltException($this);
 		        }
 		    } catch (RecognitionException $exception) {
 		        $localContext->exception = $exception;
@@ -320,50 +391,68 @@ namespace {
 		{
 		    $localContext = new Context\EnvironmentContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 6, self::RULE_environment);
+		    $this->enterRule($localContext, 8, self::RULE_environment);
 
 		    try {
 		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(46);
+		        $this->setState(60);
 		        $this->match(self::T__4);
-		        $this->setState(47);
+		        $this->setState(61);
 		        $this->match(self::LETTERS);
-		        $this->setState(48);
+		        $this->setState(62);
 		        $this->match(self::T__3);
-		        $this->setState(53);
+		        $this->setState(71);
 		        $this->errorHandler->sync($this);
 		        $_la = $this->input->LA(1);
 
 		        if ($_la === self::T__0) {
-		        	$this->setState(49);
+		        	$this->setState(63);
 		        	$this->match(self::T__0);
-		        	$this->setState(50);
-		        	$this->real_args();
-		        	$this->setState(51);
+		        	$this->setState(67);
+		        	$this->errorHandler->sync($this);
+
+		        	$_la = $this->input->LA(1);
+		        	while ($_la === self::PLAIN_TEXT || $_la === self::COMMAND) {
+		        		$this->setState(64);
+		        		$this->option_real_arg();
+		        		$this->setState(69);
+		        		$this->errorHandler->sync($this);
+		        		$_la = $this->input->LA(1);
+		        	}
+		        	$this->setState(70);
 		        	$this->match(self::T__1);
 		        }
-		        $this->setState(61);
+		        $this->setState(83);
 		        $this->errorHandler->sync($this);
 
 		        $_la = $this->input->LA(1);
 		        while ($_la === self::T__2) {
-		        	$this->setState(55);
+		        	$this->setState(73);
 		        	$this->match(self::T__2);
-		        	$this->setState(56);
-		        	$this->real_args();
-		        	$this->setState(57);
+		        	$this->setState(77);
+		        	$this->errorHandler->sync($this);
+
+		        	$_la = $this->input->LA(1);
+		        	while (((($_la) & ~0x3f) === 0 && ((1 << $_la) & 9728) !== 0)) {
+		        		$this->setState(74);
+		        		$this->necessary_real_arg();
+		        		$this->setState(79);
+		        		$this->errorHandler->sync($this);
+		        		$_la = $this->input->LA(1);
+		        	}
+		        	$this->setState(80);
 		        	$this->match(self::T__3);
-		        	$this->setState(63);
+		        	$this->setState(85);
 		        	$this->errorHandler->sync($this);
 		        	$_la = $this->input->LA(1);
 		        }
-		        $this->setState(64);
+		        $this->setState(86);
 		        $this->env_body();
-		        $this->setState(65);
+		        $this->setState(87);
 		        $this->match(self::T__5);
-		        $this->setState(66);
+		        $this->setState(88);
 		        $this->match(self::LETTERS);
-		        $this->setState(67);
+		        $this->setState(89);
 		        $this->match(self::T__3);
 		    } catch (RecognitionException $exception) {
 		        $localContext->exception = $exception;
@@ -383,38 +472,43 @@ namespace {
 		{
 		    $localContext = new Context\Env_bodyContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 8, self::RULE_env_body);
+		    $this->enterRule($localContext, 10, self::RULE_env_body);
 
 		    try {
 		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(74);
+		        $this->setState(97);
 		        $this->errorHandler->sync($this);
 
 		        $_la = $this->input->LA(1);
-		        while (((($_la) & ~0x3f) === 0 && ((1 << $_la) & 3104) !== 0)) {
-		        	$this->setState(72);
+		        while (((($_la) & ~0x3f) === 0 && ((1 << $_la) & 9760) !== 0)) {
+		        	$this->setState(95);
 		        	$this->errorHandler->sync($this);
 
 		        	switch ($this->input->LA(1)) {
 		        	    case self::PLAIN_TEXT:
-		        	    	$this->setState(69);
+		        	    	$this->setState(91);
 		        	    	$this->match(self::PLAIN_TEXT);
 		        	    	break;
 
+		        	    case self::BRACKET:
+		        	    	$this->setState(92);
+		        	    	$this->match(self::BRACKET);
+		        	    	break;
+
 		        	    case self::COMMAND:
-		        	    	$this->setState(70);
+		        	    	$this->setState(93);
 		        	    	$this->command();
 		        	    	break;
 
 		        	    case self::T__4:
-		        	    	$this->setState(71);
+		        	    	$this->setState(94);
 		        	    	$this->environment();
 		        	    	break;
 
 		        	default:
 		        		throw new NoViableAltException($this);
 		        	}
-		        	$this->setState(76);
+		        	$this->setState(99);
 		        	$this->errorHandler->sync($this);
 		        	$_la = $this->input->LA(1);
 		        }
@@ -436,15 +530,15 @@ namespace {
 		{
 		    $localContext = new Context\Math_inlineContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 10, self::RULE_math_inline);
+		    $this->enterRule($localContext, 12, self::RULE_math_inline);
 
 		    try {
 		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(77);
+		        $this->setState(100);
 		        $this->match(self::T__6);
-		        $this->setState(78);
-		        $this->in_math();
-		        $this->setState(79);
+		        $this->setState(101);
+		        $this->in_math_inline();
+		        $this->setState(102);
 		        $this->match(self::T__6);
 		    } catch (RecognitionException $exception) {
 		        $localContext->exception = $exception;
@@ -464,15 +558,15 @@ namespace {
 		{
 		    $localContext = new Context\Math_displayContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 12, self::RULE_math_display);
+		    $this->enterRule($localContext, 14, self::RULE_math_display);
 
 		    try {
 		        $this->enterOuterAlt($localContext, 1);
-		        $this->setState(81);
+		        $this->setState(104);
 		        $this->match(self::T__7);
-		        $this->setState(82);
-		        $this->in_math();
-		        $this->setState(83);
+		        $this->setState(105);
+		        $this->in_math_display();
+		        $this->setState(106);
 		        $this->match(self::T__7);
 		    } catch (RecognitionException $exception) {
 		        $localContext->exception = $exception;
@@ -488,32 +582,74 @@ namespace {
 		/**
 		 * @throws RecognitionException
 		 */
-		public function in_math(): Context\In_mathContext
+		public function in_math_inline(): Context\In_math_inlineContext
 		{
-		    $localContext = new Context\In_mathContext($this->ctx, $this->getState());
+		    $localContext = new Context\In_math_inlineContext($this->ctx, $this->getState());
 
-		    $this->enterRule($localContext, 14, self::RULE_in_math);
+		    $this->enterRule($localContext, 16, self::RULE_in_math_inline);
 
 		    try {
-		        $this->setState(88);
+		        $this->setState(111);
 		        $this->errorHandler->sync($this);
 
 		        switch ($this->input->LA(1)) {
 		            case self::PLAIN_TEXT:
 		            	$this->enterOuterAlt($localContext, 1);
-		            	$this->setState(85);
+		            	$this->setState(108);
 		            	$this->match(self::PLAIN_TEXT);
 		            	break;
 
-		            case self::COMMAND:
+		            case self::BRACKET:
 		            	$this->enterOuterAlt($localContext, 2);
-		            	$this->setState(86);
+		            	$this->setState(109);
+		            	$this->match(self::BRACKET);
+		            	break;
+
+		            case self::COMMAND:
+		            	$this->enterOuterAlt($localContext, 3);
+		            	$this->setState(110);
 		            	$this->command();
 		            	break;
 
+		        default:
+		        	throw new NoViableAltException($this);
+		        }
+		    } catch (RecognitionException $exception) {
+		        $localContext->exception = $exception;
+		        $this->errorHandler->reportError($this, $exception);
+		        $this->errorHandler->recover($this, $exception);
+		    } finally {
+		        $this->exitRule();
+		    }
+
+		    return $localContext;
+		}
+
+		/**
+		 * @throws RecognitionException
+		 */
+		public function in_math_display(): Context\In_math_displayContext
+		{
+		    $localContext = new Context\In_math_displayContext($this->ctx, $this->getState());
+
+		    $this->enterRule($localContext, 18, self::RULE_in_math_display);
+
+		    try {
+		        $this->setState(115);
+		        $this->errorHandler->sync($this);
+
+		        switch ($this->input->LA(1)) {
+		            case self::PLAIN_TEXT:
+		            case self::BRACKET:
+		            case self::COMMAND:
+		            	$this->enterOuterAlt($localContext, 1);
+		            	$this->setState(113);
+		            	$this->in_math_inline();
+		            	break;
+
 		            case self::T__4:
-		            	$this->enterOuterAlt($localContext, 3);
-		            	$this->setState(87);
+		            	$this->enterOuterAlt($localContext, 2);
+		            	$this->setState(114);
 		            	$this->environment();
 		            	break;
 
@@ -554,11 +690,6 @@ namespace Context {
 		    return atexParser::RULE_start;
 	    }
 
-	    public function PLAIN_TEXT(): ?TerminalNode
-	    {
-	        return $this->getToken(atexParser::PLAIN_TEXT, 0);
-	    }
-
 	    public function command(): ?CommandContext
 	    {
 	    	return $this->getTypedRuleContext(CommandContext::class, 0);
@@ -577,6 +708,11 @@ namespace Context {
 	    public function math_display(): ?Math_displayContext
 	    {
 	    	return $this->getTypedRuleContext(Math_displayContext::class, 0);
+	    }
+
+	    public function PLAIN_TEXT(): ?TerminalNode
+	    {
+	        return $this->getToken(atexParser::PLAIN_TEXT, 0);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
@@ -612,15 +748,27 @@ namespace Context {
 	    }
 
 	    /**
-	     * @return array<Real_argsContext>|Real_argsContext|null
+	     * @return array<Option_real_argContext>|Option_real_argContext|null
 	     */
-	    public function real_args(?int $index = null)
+	    public function option_real_arg(?int $index = null)
 	    {
 	    	if ($index === null) {
-	    		return $this->getTypedRuleContexts(Real_argsContext::class);
+	    		return $this->getTypedRuleContexts(Option_real_argContext::class);
 	    	}
 
-	        return $this->getTypedRuleContext(Real_argsContext::class, $index);
+	        return $this->getTypedRuleContext(Option_real_argContext::class, $index);
+	    }
+
+	    /**
+	     * @return array<Necessary_real_argContext>|Necessary_real_argContext|null
+	     */
+	    public function necessary_real_arg(?int $index = null)
+	    {
+	    	if ($index === null) {
+	    		return $this->getTypedRuleContexts(Necessary_real_argContext::class);
+	    	}
+
+	        return $this->getTypedRuleContext(Necessary_real_argContext::class, $index);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
@@ -638,7 +786,7 @@ namespace Context {
 		}
 	} 
 
-	class Real_argsContext extends ParserRuleContext
+	class Necessary_real_argContext extends ParserRuleContext
 	{
 		public function __construct(?ParserRuleContext $parent, ?int $invokingState = null)
 		{
@@ -647,44 +795,72 @@ namespace Context {
 
 		public function getRuleIndex(): int
 		{
-		    return atexParser::RULE_real_args;
+		    return atexParser::RULE_necessary_real_arg;
 	    }
 
-	    /**
-	     * @return array<TerminalNode>|TerminalNode|null
-	     */
-	    public function PLAIN_TEXT(?int $index = null)
+	    public function PLAIN_TEXT(): ?TerminalNode
 	    {
-	    	if ($index === null) {
-	    		return $this->getTokens(atexParser::PLAIN_TEXT);
-	    	}
-
-	        return $this->getToken(atexParser::PLAIN_TEXT, $index);
+	        return $this->getToken(atexParser::PLAIN_TEXT, 0);
 	    }
 
-	    /**
-	     * @return array<CommandContext>|CommandContext|null
-	     */
-	    public function command(?int $index = null)
+	    public function BRACKET(): ?TerminalNode
 	    {
-	    	if ($index === null) {
-	    		return $this->getTypedRuleContexts(CommandContext::class);
-	    	}
+	        return $this->getToken(atexParser::BRACKET, 0);
+	    }
 
-	        return $this->getTypedRuleContext(CommandContext::class, $index);
+	    public function command(): ?CommandContext
+	    {
+	    	return $this->getTypedRuleContext(CommandContext::class, 0);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
 		{
 			if ($listener instanceof atexListener) {
-			    $listener->enterReal_args($this);
+			    $listener->enterNecessary_real_arg($this);
 		    }
 		}
 
 		public function exitRule(ParseTreeListener $listener): void
 		{
 			if ($listener instanceof atexListener) {
-			    $listener->exitReal_args($this);
+			    $listener->exitNecessary_real_arg($this);
+		    }
+		}
+	} 
+
+	class Option_real_argContext extends ParserRuleContext
+	{
+		public function __construct(?ParserRuleContext $parent, ?int $invokingState = null)
+		{
+			parent::__construct($parent, $invokingState);
+		}
+
+		public function getRuleIndex(): int
+		{
+		    return atexParser::RULE_option_real_arg;
+	    }
+
+	    public function PLAIN_TEXT(): ?TerminalNode
+	    {
+	        return $this->getToken(atexParser::PLAIN_TEXT, 0);
+	    }
+
+	    public function command(): ?CommandContext
+	    {
+	    	return $this->getTypedRuleContext(CommandContext::class, 0);
+	    }
+
+		public function enterRule(ParseTreeListener $listener): void
+		{
+			if ($listener instanceof atexListener) {
+			    $listener->enterOption_real_arg($this);
+		    }
+		}
+
+		public function exitRule(ParseTreeListener $listener): void
+		{
+			if ($listener instanceof atexListener) {
+			    $listener->exitOption_real_arg($this);
 		    }
 		}
 	} 
@@ -719,15 +895,27 @@ namespace Context {
 	    }
 
 	    /**
-	     * @return array<Real_argsContext>|Real_argsContext|null
+	     * @return array<Option_real_argContext>|Option_real_argContext|null
 	     */
-	    public function real_args(?int $index = null)
+	    public function option_real_arg(?int $index = null)
 	    {
 	    	if ($index === null) {
-	    		return $this->getTypedRuleContexts(Real_argsContext::class);
+	    		return $this->getTypedRuleContexts(Option_real_argContext::class);
 	    	}
 
-	        return $this->getTypedRuleContext(Real_argsContext::class, $index);
+	        return $this->getTypedRuleContext(Option_real_argContext::class, $index);
+	    }
+
+	    /**
+	     * @return array<Necessary_real_argContext>|Necessary_real_argContext|null
+	     */
+	    public function necessary_real_arg(?int $index = null)
+	    {
+	    	if ($index === null) {
+	    		return $this->getTypedRuleContexts(Necessary_real_argContext::class);
+	    	}
+
+	        return $this->getTypedRuleContext(Necessary_real_argContext::class, $index);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
@@ -767,6 +955,18 @@ namespace Context {
 	    	}
 
 	        return $this->getToken(atexParser::PLAIN_TEXT, $index);
+	    }
+
+	    /**
+	     * @return array<TerminalNode>|TerminalNode|null
+	     */
+	    public function BRACKET(?int $index = null)
+	    {
+	    	if ($index === null) {
+	    		return $this->getTokens(atexParser::BRACKET);
+	    	}
+
+	        return $this->getToken(atexParser::BRACKET, $index);
 	    }
 
 	    /**
@@ -820,9 +1020,9 @@ namespace Context {
 		    return atexParser::RULE_math_inline;
 	    }
 
-	    public function in_math(): ?In_mathContext
+	    public function in_math_inline(): ?In_math_inlineContext
 	    {
-	    	return $this->getTypedRuleContext(In_mathContext::class, 0);
+	    	return $this->getTypedRuleContext(In_math_inlineContext::class, 0);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
@@ -852,9 +1052,9 @@ namespace Context {
 		    return atexParser::RULE_math_display;
 	    }
 
-	    public function in_math(): ?In_mathContext
+	    public function in_math_display(): ?In_math_displayContext
 	    {
-	    	return $this->getTypedRuleContext(In_mathContext::class, 0);
+	    	return $this->getTypedRuleContext(In_math_displayContext::class, 0);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void
@@ -872,7 +1072,7 @@ namespace Context {
 		}
 	} 
 
-	class In_mathContext extends ParserRuleContext
+	class In_math_inlineContext extends ParserRuleContext
 	{
 		public function __construct(?ParserRuleContext $parent, ?int $invokingState = null)
 		{
@@ -881,7 +1081,7 @@ namespace Context {
 
 		public function getRuleIndex(): int
 		{
-		    return atexParser::RULE_in_math;
+		    return atexParser::RULE_in_math_inline;
 	    }
 
 	    public function PLAIN_TEXT(): ?TerminalNode
@@ -889,9 +1089,46 @@ namespace Context {
 	        return $this->getToken(atexParser::PLAIN_TEXT, 0);
 	    }
 
+	    public function BRACKET(): ?TerminalNode
+	    {
+	        return $this->getToken(atexParser::BRACKET, 0);
+	    }
+
 	    public function command(): ?CommandContext
 	    {
 	    	return $this->getTypedRuleContext(CommandContext::class, 0);
+	    }
+
+		public function enterRule(ParseTreeListener $listener): void
+		{
+			if ($listener instanceof atexListener) {
+			    $listener->enterIn_math_inline($this);
+		    }
+		}
+
+		public function exitRule(ParseTreeListener $listener): void
+		{
+			if ($listener instanceof atexListener) {
+			    $listener->exitIn_math_inline($this);
+		    }
+		}
+	} 
+
+	class In_math_displayContext extends ParserRuleContext
+	{
+		public function __construct(?ParserRuleContext $parent, ?int $invokingState = null)
+		{
+			parent::__construct($parent, $invokingState);
+		}
+
+		public function getRuleIndex(): int
+		{
+		    return atexParser::RULE_in_math_display;
+	    }
+
+	    public function in_math_inline(): ?In_math_inlineContext
+	    {
+	    	return $this->getTypedRuleContext(In_math_inlineContext::class, 0);
 	    }
 
 	    public function environment(): ?EnvironmentContext
@@ -902,14 +1139,14 @@ namespace Context {
 		public function enterRule(ParseTreeListener $listener): void
 		{
 			if ($listener instanceof atexListener) {
-			    $listener->enterIn_math($this);
+			    $listener->enterIn_math_display($this);
 		    }
 		}
 
 		public function exitRule(ParseTreeListener $listener): void
 		{
 			if ($listener instanceof atexListener) {
-			    $listener->exitIn_math($this);
+			    $listener->exitIn_math_display($this);
 		    }
 		}
 	} 

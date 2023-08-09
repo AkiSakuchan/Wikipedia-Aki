@@ -47,14 +47,27 @@ class atexBaseListener implements atexListener
 	 *
 	 * The default implementation does nothing.
 	 */
-	public function enterReal_args(Context\Real_argsContext $context): void {}
+	public function enterNecessary_real_arg(Context\Necessary_real_argContext $context): void {}
 
 	/**
 	 * {@inheritdoc}
 	 *
 	 * The default implementation does nothing.
 	 */
-	public function exitReal_args(Context\Real_argsContext $context): void {}
+	public function exitNecessary_real_arg(Context\Necessary_real_argContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterOption_real_arg(Context\Option_real_argContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitOption_real_arg(Context\Option_real_argContext $context): void {}
 	/**
 	 * {@inheritdoc}
 	 *
@@ -112,14 +125,27 @@ class atexBaseListener implements atexListener
 	 *
 	 * The default implementation does nothing.
 	 */
-	public function enterIn_math(Context\In_mathContext $context): void {}
+	public function enterIn_math_inline(Context\In_math_inlineContext $context): void {}
 
 	/**
 	 * {@inheritdoc}
 	 *
 	 * The default implementation does nothing.
 	 */
-	public function exitIn_math(Context\In_mathContext $context): void {}
+	public function exitIn_math_inline(Context\In_math_inlineContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function enterIn_math_display(Context\In_math_displayContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitIn_math_display(Context\In_math_displayContext $context): void {}
 
 	/**
 	 * {@inheritdoc}

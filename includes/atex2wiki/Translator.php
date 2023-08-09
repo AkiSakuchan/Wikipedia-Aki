@@ -15,13 +15,20 @@ class Listener extends atexBaseListener
     }
     public function exitCommand(Context\CommandContext $ctx):void
     {
-        echo $ctx->COMMAND()->getText();
-        echo "\n";
+        //echo $ctx->getText();
+        //echo "\n";
     }
 
-    public function exitMath_display(Context\Math_displayContext $ctx):void
+    public function exitOption_real_arg(Context\Option_real_argContext $ctx):void
     {
-        echo '<yamath display="true">' . $ctx->in_math()->getText() . '</yamath>';
+        echo $ctx->getText();
+        echo "1\n";
+    }
+
+    public function exitNecessary_real_arg(Context\Necessary_real_argContext $ctx):void
+    {
+        echo $ctx->getText();
+        echo "2\n";
     }
 
     public function exitStart(Context\StartContext $ctx):void
@@ -30,7 +37,7 @@ class Listener extends atexBaseListener
     }
 }
 
-$text = '$$\frac{ 3 }{ \rome \a_{2} }$$';
+$text = '\frac[acdd]{ ABC }';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);

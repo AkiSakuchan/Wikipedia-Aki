@@ -168,9 +168,13 @@ class ComposerStaticInit6893acfb88083e256f2af208faa938be
         'Context\\CommandContext' => __DIR__ . '/../..' . '/atexParser.php',
         'Context\\Env_bodyContext' => __DIR__ . '/../..' . '/atexParser.php',
         'Context\\EnvironmentContext' => __DIR__ . '/../..' . '/atexParser.php',
-        'Context\\Real_argsContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\In_math_displayContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\In_math_inlineContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\Math_displayContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\Math_inlineContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\Necessary_real_argContext' => __DIR__ . '/../..' . '/atexParser.php',
+        'Context\\Option_real_argContext' => __DIR__ . '/../..' . '/atexParser.php',
         'Context\\StartContext' => __DIR__ . '/../..' . '/atexParser.php',
-        'Counter' => __DIR__ . '/../..' . '/Counter.php',
         'Listener' => __DIR__ . '/../..' . '/Translator.php',
         'Psr\\Log\\AbstractLogger' => __DIR__ . '/..' . '/psr/log/src/AbstractLogger.php',
         'Psr\\Log\\InvalidArgumentException' => __DIR__ . '/..' . '/psr/log/src/InvalidArgumentException.php',
@@ -184,8 +188,6 @@ class ComposerStaticInit6893acfb88083e256f2af208faa938be
         'atexLexer' => __DIR__ . '/../..' . '/atexLexer.php',
         'atexListener' => __DIR__ . '/../..' . '/atexListener.php',
         'atexParser' => __DIR__ . '/../..' . '/atexParser.php',
-        'scriptStyleHooks' => __DIR__ . '/../..' . '/scriptStyleHooks.php',
-        'tagHooks' => __DIR__ . '/../..' . '/TagHooks.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

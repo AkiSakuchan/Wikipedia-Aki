@@ -32,15 +32,25 @@ interface atexListener extends ParseTreeListener {
 	 */
 	public function exitCommand(Context\CommandContext $context): void;
 	/**
-	 * Enter a parse tree produced by {@see atexParser::real_args()}.
+	 * Enter a parse tree produced by {@see atexParser::necessary_real_arg()}.
 	 * @param $context The parse tree.
 	 */
-	public function enterReal_args(Context\Real_argsContext $context): void;
+	public function enterNecessary_real_arg(Context\Necessary_real_argContext $context): void;
 	/**
-	 * Exit a parse tree produced by {@see atexParser::real_args()}.
+	 * Exit a parse tree produced by {@see atexParser::necessary_real_arg()}.
 	 * @param $context The parse tree.
 	 */
-	public function exitReal_args(Context\Real_argsContext $context): void;
+	public function exitNecessary_real_arg(Context\Necessary_real_argContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see atexParser::option_real_arg()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterOption_real_arg(Context\Option_real_argContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see atexParser::option_real_arg()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitOption_real_arg(Context\Option_real_argContext $context): void;
 	/**
 	 * Enter a parse tree produced by {@see atexParser::environment()}.
 	 * @param $context The parse tree.
@@ -82,13 +92,23 @@ interface atexListener extends ParseTreeListener {
 	 */
 	public function exitMath_display(Context\Math_displayContext $context): void;
 	/**
-	 * Enter a parse tree produced by {@see atexParser::in_math()}.
+	 * Enter a parse tree produced by {@see atexParser::in_math_inline()}.
 	 * @param $context The parse tree.
 	 */
-	public function enterIn_math(Context\In_mathContext $context): void;
+	public function enterIn_math_inline(Context\In_math_inlineContext $context): void;
 	/**
-	 * Exit a parse tree produced by {@see atexParser::in_math()}.
+	 * Exit a parse tree produced by {@see atexParser::in_math_inline()}.
 	 * @param $context The parse tree.
 	 */
-	public function exitIn_math(Context\In_mathContext $context): void;
+	public function exitIn_math_inline(Context\In_math_inlineContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see atexParser::in_math_display()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterIn_math_display(Context\In_math_displayContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see atexParser::in_math_display()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitIn_math_display(Context\In_math_displayContext $context): void;
 }

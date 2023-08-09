@@ -16,15 +16,16 @@ public class atexParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, LETTERS=9, 
-		COMMAND=10, PLAIN_TEXT=11, WS=12;
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, PLAIN_TEXT=9, 
+		BRACKET=10, LETTERS=11, DIGIT=12, COMMAND=13;
 	public static final int
-		RULE_start = 0, RULE_command = 1, RULE_real_args = 2, RULE_environment = 3, 
-		RULE_env_body = 4, RULE_math_inline = 5, RULE_math_display = 6, RULE_in_math = 7;
+		RULE_start = 0, RULE_command = 1, RULE_necessary_real_arg = 2, RULE_option_real_arg = 3, 
+		RULE_environment = 4, RULE_env_body = 5, RULE_math_inline = 6, RULE_math_display = 7, 
+		RULE_in_math_inline = 8, RULE_in_math_display = 9;
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"start", "command", "real_args", "environment", "env_body", "math_inline", 
-			"math_display", "in_math"
+			"start", "command", "necessary_real_arg", "option_real_arg", "environment", 
+			"env_body", "math_inline", "math_display", "in_math_inline", "in_math_display"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -37,8 +38,8 @@ public class atexParser extends Parser {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, null, null, null, null, null, null, "LETTERS", "COMMAND", 
-			"PLAIN_TEXT", "WS"
+			null, null, null, null, null, null, null, null, null, "PLAIN_TEXT", "BRACKET", 
+			"LETTERS", "DIGIT", "COMMAND"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -93,7 +94,6 @@ public class atexParser extends Parser {
 	}
 
 	public static class StartContext extends ParserRuleContext {
-		public TerminalNode PLAIN_TEXT() { return getToken(atexParser.PLAIN_TEXT, 0); }
 		public CommandContext command() {
 			return getRuleContext(CommandContext.class,0);
 		}
@@ -106,6 +106,7 @@ public class atexParser extends Parser {
 		public Math_displayContext math_display() {
 			return getRuleContext(Math_displayContext.class,0);
 		}
+		public TerminalNode PLAIN_TEXT() { return getToken(atexParser.PLAIN_TEXT, 0); }
 		public StartContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -116,42 +117,42 @@ public class atexParser extends Parser {
 		StartContext _localctx = new StartContext(_ctx, getState());
 		enterRule(_localctx, 0, RULE_start);
 		try {
-			setState(21);
+			setState(25);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case PLAIN_TEXT:
+			case COMMAND:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(16);
-				match(PLAIN_TEXT);
-				}
-				break;
-			case COMMAND:
-				enterOuterAlt(_localctx, 2);
-				{
-				setState(17);
+				setState(20);
 				command();
 				}
 				break;
 			case T__4:
-				enterOuterAlt(_localctx, 3);
+				enterOuterAlt(_localctx, 2);
 				{
-				setState(18);
+				setState(21);
 				environment();
 				}
 				break;
 			case T__6:
-				enterOuterAlt(_localctx, 4);
+				enterOuterAlt(_localctx, 3);
 				{
-				setState(19);
+				setState(22);
 				math_inline();
 				}
 				break;
 			case T__7:
+				enterOuterAlt(_localctx, 4);
+				{
+				setState(23);
+				math_display();
+				}
+				break;
+			case PLAIN_TEXT:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(20);
-				math_display();
+				setState(24);
+				match(PLAIN_TEXT);
 				}
 				break;
 			default:
@@ -171,11 +172,17 @@ public class atexParser extends Parser {
 
 	public static class CommandContext extends ParserRuleContext {
 		public TerminalNode COMMAND() { return getToken(atexParser.COMMAND, 0); }
-		public List<Real_argsContext> real_args() {
-			return getRuleContexts(Real_argsContext.class);
+		public List<Option_real_argContext> option_real_arg() {
+			return getRuleContexts(Option_real_argContext.class);
 		}
-		public Real_argsContext real_args(int i) {
-			return getRuleContext(Real_argsContext.class,i);
+		public Option_real_argContext option_real_arg(int i) {
+			return getRuleContext(Option_real_argContext.class,i);
+		}
+		public List<Necessary_real_argContext> necessary_real_arg() {
+			return getRuleContexts(Necessary_real_argContext.class);
+		}
+		public Necessary_real_argContext necessary_real_arg(int i) {
+			return getRuleContext(Necessary_real_argContext.class,i);
 		}
 		public CommandContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -190,37 +197,61 @@ public class atexParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(23);
+			setState(27);
 			match(COMMAND);
-			setState(28);
+			setState(36);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__0) {
 				{
-				setState(24);
+				setState(28);
 				match(T__0);
-				setState(25);
-				real_args();
-				setState(26);
+				setState(32);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while (_la==PLAIN_TEXT || _la==COMMAND) {
+					{
+					{
+					setState(29);
+					option_real_arg();
+					}
+					}
+					setState(34);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(35);
 				match(T__1);
 				}
 			}
 
-			setState(36);
+			setState(48);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__2) {
 				{
 				{
-				setState(30);
+				setState(38);
 				match(T__2);
-				setState(31);
-				real_args();
-				setState(32);
+				setState(42);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << PLAIN_TEXT) | (1L << BRACKET) | (1L << COMMAND))) != 0)) {
+					{
+					{
+					setState(39);
+					necessary_real_arg();
+					}
+					}
+					setState(44);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(45);
 				match(T__3);
 				}
 				}
-				setState(38);
+				setState(50);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -237,58 +268,95 @@ public class atexParser extends Parser {
 		return _localctx;
 	}
 
-	public static class Real_argsContext extends ParserRuleContext {
-		public List<TerminalNode> PLAIN_TEXT() { return getTokens(atexParser.PLAIN_TEXT); }
-		public TerminalNode PLAIN_TEXT(int i) {
-			return getToken(atexParser.PLAIN_TEXT, i);
+	public static class Necessary_real_argContext extends ParserRuleContext {
+		public TerminalNode PLAIN_TEXT() { return getToken(atexParser.PLAIN_TEXT, 0); }
+		public TerminalNode BRACKET() { return getToken(atexParser.BRACKET, 0); }
+		public CommandContext command() {
+			return getRuleContext(CommandContext.class,0);
 		}
-		public List<CommandContext> command() {
-			return getRuleContexts(CommandContext.class);
-		}
-		public CommandContext command(int i) {
-			return getRuleContext(CommandContext.class,i);
-		}
-		public Real_argsContext(ParserRuleContext parent, int invokingState) {
+		public Necessary_real_argContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_real_args; }
+		@Override public int getRuleIndex() { return RULE_necessary_real_arg; }
 	}
 
-	public final Real_argsContext real_args() throws RecognitionException {
-		Real_argsContext _localctx = new Real_argsContext(_ctx, getState());
-		enterRule(_localctx, 4, RULE_real_args);
-		int _la;
+	public final Necessary_real_argContext necessary_real_arg() throws RecognitionException {
+		Necessary_real_argContext _localctx = new Necessary_real_argContext(_ctx, getState());
+		enterRule(_localctx, 4, RULE_necessary_real_arg);
 		try {
-			enterOuterAlt(_localctx, 1);
-			{
-			setState(43);
+			setState(54);
 			_errHandler.sync(this);
-			_la = _input.LA(1);
-			while (_la==COMMAND || _la==PLAIN_TEXT) {
+			switch (_input.LA(1)) {
+			case PLAIN_TEXT:
+				enterOuterAlt(_localctx, 1);
 				{
-				setState(41);
-				_errHandler.sync(this);
-				switch (_input.LA(1)) {
-				case PLAIN_TEXT:
-					{
-					setState(39);
-					match(PLAIN_TEXT);
-					}
-					break;
-				case COMMAND:
-					{
-					setState(40);
-					command();
-					}
-					break;
-				default:
-					throw new NoViableAltException(this);
+				setState(51);
+				match(PLAIN_TEXT);
 				}
+				break;
+			case BRACKET:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(52);
+				match(BRACKET);
 				}
-				setState(45);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
+				break;
+			case COMMAND:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(53);
+				command();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
 			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class Option_real_argContext extends ParserRuleContext {
+		public TerminalNode PLAIN_TEXT() { return getToken(atexParser.PLAIN_TEXT, 0); }
+		public CommandContext command() {
+			return getRuleContext(CommandContext.class,0);
+		}
+		public Option_real_argContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_option_real_arg; }
+	}
+
+	public final Option_real_argContext option_real_arg() throws RecognitionException {
+		Option_real_argContext _localctx = new Option_real_argContext(_ctx, getState());
+		enterRule(_localctx, 6, RULE_option_real_arg);
+		try {
+			setState(58);
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
+			case PLAIN_TEXT:
+				enterOuterAlt(_localctx, 1);
+				{
+				setState(56);
+				match(PLAIN_TEXT);
+				}
+				break;
+			case COMMAND:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(57);
+				command();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -310,11 +378,17 @@ public class atexParser extends Parser {
 		public Env_bodyContext env_body() {
 			return getRuleContext(Env_bodyContext.class,0);
 		}
-		public List<Real_argsContext> real_args() {
-			return getRuleContexts(Real_argsContext.class);
+		public List<Option_real_argContext> option_real_arg() {
+			return getRuleContexts(Option_real_argContext.class);
 		}
-		public Real_argsContext real_args(int i) {
-			return getRuleContext(Real_argsContext.class,i);
+		public Option_real_argContext option_real_arg(int i) {
+			return getRuleContext(Option_real_argContext.class,i);
+		}
+		public List<Necessary_real_argContext> necessary_real_arg() {
+			return getRuleContexts(Necessary_real_argContext.class);
+		}
+		public Necessary_real_argContext necessary_real_arg(int i) {
+			return getRuleContext(Necessary_real_argContext.class,i);
 		}
 		public EnvironmentContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -324,56 +398,80 @@ public class atexParser extends Parser {
 
 	public final EnvironmentContext environment() throws RecognitionException {
 		EnvironmentContext _localctx = new EnvironmentContext(_ctx, getState());
-		enterRule(_localctx, 6, RULE_environment);
+		enterRule(_localctx, 8, RULE_environment);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(46);
+			setState(60);
 			match(T__4);
-			setState(47);
+			setState(61);
 			match(LETTERS);
-			setState(48);
+			setState(62);
 			match(T__3);
-			setState(53);
+			setState(71);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__0) {
 				{
-				setState(49);
+				setState(63);
 				match(T__0);
-				setState(50);
-				real_args();
-				setState(51);
+				setState(67);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while (_la==PLAIN_TEXT || _la==COMMAND) {
+					{
+					{
+					setState(64);
+					option_real_arg();
+					}
+					}
+					setState(69);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(70);
 				match(T__1);
 				}
 			}
 
-			setState(61);
+			setState(83);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__2) {
 				{
 				{
-				setState(55);
+				setState(73);
 				match(T__2);
-				setState(56);
-				real_args();
-				setState(57);
+				setState(77);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << PLAIN_TEXT) | (1L << BRACKET) | (1L << COMMAND))) != 0)) {
+					{
+					{
+					setState(74);
+					necessary_real_arg();
+					}
+					}
+					setState(79);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(80);
 				match(T__3);
 				}
 				}
-				setState(63);
+				setState(85);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(64);
+			setState(86);
 			env_body();
-			setState(65);
+			setState(87);
 			match(T__5);
-			setState(66);
+			setState(88);
 			match(LETTERS);
-			setState(67);
+			setState(89);
 			match(T__3);
 			}
 		}
@@ -392,6 +490,10 @@ public class atexParser extends Parser {
 		public List<TerminalNode> PLAIN_TEXT() { return getTokens(atexParser.PLAIN_TEXT); }
 		public TerminalNode PLAIN_TEXT(int i) {
 			return getToken(atexParser.PLAIN_TEXT, i);
+		}
+		public List<TerminalNode> BRACKET() { return getTokens(atexParser.BRACKET); }
+		public TerminalNode BRACKET(int i) {
+			return getToken(atexParser.BRACKET, i);
 		}
 		public List<CommandContext> command() {
 			return getRuleContexts(CommandContext.class);
@@ -413,34 +515,40 @@ public class atexParser extends Parser {
 
 	public final Env_bodyContext env_body() throws RecognitionException {
 		Env_bodyContext _localctx = new Env_bodyContext(_ctx, getState());
-		enterRule(_localctx, 8, RULE_env_body);
+		enterRule(_localctx, 10, RULE_env_body);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(74);
+			setState(97);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << COMMAND) | (1L << PLAIN_TEXT))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << PLAIN_TEXT) | (1L << BRACKET) | (1L << COMMAND))) != 0)) {
 				{
-				setState(72);
+				setState(95);
 				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case PLAIN_TEXT:
 					{
-					setState(69);
+					setState(91);
 					match(PLAIN_TEXT);
+					}
+					break;
+				case BRACKET:
+					{
+					setState(92);
+					match(BRACKET);
 					}
 					break;
 				case COMMAND:
 					{
-					setState(70);
+					setState(93);
 					command();
 					}
 					break;
 				case T__4:
 					{
-					setState(71);
+					setState(94);
 					environment();
 					}
 					break;
@@ -448,7 +556,7 @@ public class atexParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				setState(76);
+				setState(99);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -466,8 +574,8 @@ public class atexParser extends Parser {
 	}
 
 	public static class Math_inlineContext extends ParserRuleContext {
-		public In_mathContext in_math() {
-			return getRuleContext(In_mathContext.class,0);
+		public In_math_inlineContext in_math_inline() {
+			return getRuleContext(In_math_inlineContext.class,0);
 		}
 		public Math_inlineContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -477,15 +585,15 @@ public class atexParser extends Parser {
 
 	public final Math_inlineContext math_inline() throws RecognitionException {
 		Math_inlineContext _localctx = new Math_inlineContext(_ctx, getState());
-		enterRule(_localctx, 10, RULE_math_inline);
+		enterRule(_localctx, 12, RULE_math_inline);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(77);
+			setState(100);
 			match(T__6);
-			setState(78);
-			in_math();
-			setState(79);
+			setState(101);
+			in_math_inline();
+			setState(102);
 			match(T__6);
 			}
 		}
@@ -501,8 +609,8 @@ public class atexParser extends Parser {
 	}
 
 	public static class Math_displayContext extends ParserRuleContext {
-		public In_mathContext in_math() {
-			return getRuleContext(In_mathContext.class,0);
+		public In_math_displayContext in_math_display() {
+			return getRuleContext(In_math_displayContext.class,0);
 		}
 		public Math_displayContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -512,15 +620,15 @@ public class atexParser extends Parser {
 
 	public final Math_displayContext math_display() throws RecognitionException {
 		Math_displayContext _localctx = new Math_displayContext(_ctx, getState());
-		enterRule(_localctx, 12, RULE_math_display);
+		enterRule(_localctx, 14, RULE_math_display);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(81);
+			setState(104);
 			match(T__7);
-			setState(82);
-			in_math();
-			setState(83);
+			setState(105);
+			in_math_display();
+			setState(106);
 			match(T__7);
 			}
 		}
@@ -535,45 +643,94 @@ public class atexParser extends Parser {
 		return _localctx;
 	}
 
-	public static class In_mathContext extends ParserRuleContext {
+	public static class In_math_inlineContext extends ParserRuleContext {
 		public TerminalNode PLAIN_TEXT() { return getToken(atexParser.PLAIN_TEXT, 0); }
+		public TerminalNode BRACKET() { return getToken(atexParser.BRACKET, 0); }
 		public CommandContext command() {
 			return getRuleContext(CommandContext.class,0);
 		}
-		public EnvironmentContext environment() {
-			return getRuleContext(EnvironmentContext.class,0);
-		}
-		public In_mathContext(ParserRuleContext parent, int invokingState) {
+		public In_math_inlineContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_in_math; }
+		@Override public int getRuleIndex() { return RULE_in_math_inline; }
 	}
 
-	public final In_mathContext in_math() throws RecognitionException {
-		In_mathContext _localctx = new In_mathContext(_ctx, getState());
-		enterRule(_localctx, 14, RULE_in_math);
+	public final In_math_inlineContext in_math_inline() throws RecognitionException {
+		In_math_inlineContext _localctx = new In_math_inlineContext(_ctx, getState());
+		enterRule(_localctx, 16, RULE_in_math_inline);
 		try {
-			setState(88);
+			setState(111);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case PLAIN_TEXT:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(85);
+				setState(108);
 				match(PLAIN_TEXT);
 				}
 				break;
-			case COMMAND:
+			case BRACKET:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(86);
+				setState(109);
+				match(BRACKET);
+				}
+				break;
+			case COMMAND:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(110);
 				command();
 				}
 				break;
-			case T__4:
-				enterOuterAlt(_localctx, 3);
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class In_math_displayContext extends ParserRuleContext {
+		public In_math_inlineContext in_math_inline() {
+			return getRuleContext(In_math_inlineContext.class,0);
+		}
+		public EnvironmentContext environment() {
+			return getRuleContext(EnvironmentContext.class,0);
+		}
+		public In_math_displayContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_in_math_display; }
+	}
+
+	public final In_math_displayContext in_math_display() throws RecognitionException {
+		In_math_displayContext _localctx = new In_math_displayContext(_ctx, getState());
+		enterRule(_localctx, 18, RULE_in_math_display);
+		try {
+			setState(115);
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
+			case PLAIN_TEXT:
+			case BRACKET:
+			case COMMAND:
+				enterOuterAlt(_localctx, 1);
 				{
-				setState(87);
+				setState(113);
+				in_math_inline();
+				}
+				break;
+			case T__4:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(114);
 				environment();
 				}
 				break;
@@ -593,30 +750,36 @@ public class atexParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\16]\4\2\t\2\4\3\t"+
-		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\3\2\3\2\3\2\3\2\3\2"+
-		"\5\2\30\n\2\3\3\3\3\3\3\3\3\3\3\5\3\37\n\3\3\3\3\3\3\3\3\3\7\3%\n\3\f"+
-		"\3\16\3(\13\3\3\4\3\4\7\4,\n\4\f\4\16\4/\13\4\3\5\3\5\3\5\3\5\3\5\3\5"+
-		"\3\5\5\58\n\5\3\5\3\5\3\5\3\5\7\5>\n\5\f\5\16\5A\13\5\3\5\3\5\3\5\3\5"+
-		"\3\5\3\6\3\6\3\6\7\6K\n\6\f\6\16\6N\13\6\3\7\3\7\3\7\3\7\3\b\3\b\3\b\3"+
-		"\b\3\t\3\t\3\t\5\t[\n\t\3\t\2\2\n\2\4\6\b\n\f\16\20\2\2\2c\2\27\3\2\2"+
-		"\2\4\31\3\2\2\2\6-\3\2\2\2\b\60\3\2\2\2\nL\3\2\2\2\fO\3\2\2\2\16S\3\2"+
-		"\2\2\20Z\3\2\2\2\22\30\7\r\2\2\23\30\5\4\3\2\24\30\5\b\5\2\25\30\5\f\7"+
-		"\2\26\30\5\16\b\2\27\22\3\2\2\2\27\23\3\2\2\2\27\24\3\2\2\2\27\25\3\2"+
-		"\2\2\27\26\3\2\2\2\30\3\3\2\2\2\31\36\7\f\2\2\32\33\7\3\2\2\33\34\5\6"+
-		"\4\2\34\35\7\4\2\2\35\37\3\2\2\2\36\32\3\2\2\2\36\37\3\2\2\2\37&\3\2\2"+
-		"\2 !\7\5\2\2!\"\5\6\4\2\"#\7\6\2\2#%\3\2\2\2$ \3\2\2\2%(\3\2\2\2&$\3\2"+
-		"\2\2&\'\3\2\2\2\'\5\3\2\2\2(&\3\2\2\2),\7\r\2\2*,\5\4\3\2+)\3\2\2\2+*"+
-		"\3\2\2\2,/\3\2\2\2-+\3\2\2\2-.\3\2\2\2.\7\3\2\2\2/-\3\2\2\2\60\61\7\7"+
-		"\2\2\61\62\7\13\2\2\62\67\7\6\2\2\63\64\7\3\2\2\64\65\5\6\4\2\65\66\7"+
-		"\4\2\2\668\3\2\2\2\67\63\3\2\2\2\678\3\2\2\28?\3\2\2\29:\7\5\2\2:;\5\6"+
-		"\4\2;<\7\6\2\2<>\3\2\2\2=9\3\2\2\2>A\3\2\2\2?=\3\2\2\2?@\3\2\2\2@B\3\2"+
-		"\2\2A?\3\2\2\2BC\5\n\6\2CD\7\b\2\2DE\7\13\2\2EF\7\6\2\2F\t\3\2\2\2GK\7"+
-		"\r\2\2HK\5\4\3\2IK\5\b\5\2JG\3\2\2\2JH\3\2\2\2JI\3\2\2\2KN\3\2\2\2LJ\3"+
-		"\2\2\2LM\3\2\2\2M\13\3\2\2\2NL\3\2\2\2OP\7\t\2\2PQ\5\20\t\2QR\7\t\2\2"+
-		"R\r\3\2\2\2ST\7\n\2\2TU\5\20\t\2UV\7\n\2\2V\17\3\2\2\2W[\7\r\2\2X[\5\4"+
-		"\3\2Y[\5\b\5\2ZW\3\2\2\2ZX\3\2\2\2ZY\3\2\2\2[\21\3\2\2\2\f\27\36&+-\67"+
-		"?JLZ";
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\17x\4\2\t\2\4\3\t"+
+		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\3"+
+		"\2\3\2\3\2\3\2\3\2\5\2\34\n\2\3\3\3\3\3\3\7\3!\n\3\f\3\16\3$\13\3\3\3"+
+		"\5\3\'\n\3\3\3\3\3\7\3+\n\3\f\3\16\3.\13\3\3\3\7\3\61\n\3\f\3\16\3\64"+
+		"\13\3\3\4\3\4\3\4\5\49\n\4\3\5\3\5\5\5=\n\5\3\6\3\6\3\6\3\6\3\6\7\6D\n"+
+		"\6\f\6\16\6G\13\6\3\6\5\6J\n\6\3\6\3\6\7\6N\n\6\f\6\16\6Q\13\6\3\6\7\6"+
+		"T\n\6\f\6\16\6W\13\6\3\6\3\6\3\6\3\6\3\6\3\7\3\7\3\7\3\7\7\7b\n\7\f\7"+
+		"\16\7e\13\7\3\b\3\b\3\b\3\b\3\t\3\t\3\t\3\t\3\n\3\n\3\n\5\nr\n\n\3\13"+
+		"\3\13\5\13v\n\13\3\13\2\2\f\2\4\6\b\n\f\16\20\22\24\2\2\2\u0083\2\33\3"+
+		"\2\2\2\4\35\3\2\2\2\68\3\2\2\2\b<\3\2\2\2\n>\3\2\2\2\fc\3\2\2\2\16f\3"+
+		"\2\2\2\20j\3\2\2\2\22q\3\2\2\2\24u\3\2\2\2\26\34\5\4\3\2\27\34\5\n\6\2"+
+		"\30\34\5\16\b\2\31\34\5\20\t\2\32\34\7\13\2\2\33\26\3\2\2\2\33\27\3\2"+
+		"\2\2\33\30\3\2\2\2\33\31\3\2\2\2\33\32\3\2\2\2\34\3\3\2\2\2\35&\7\17\2"+
+		"\2\36\"\7\3\2\2\37!\5\b\5\2 \37\3\2\2\2!$\3\2\2\2\" \3\2\2\2\"#\3\2\2"+
+		"\2#%\3\2\2\2$\"\3\2\2\2%\'\7\4\2\2&\36\3\2\2\2&\'\3\2\2\2\'\62\3\2\2\2"+
+		"(,\7\5\2\2)+\5\6\4\2*)\3\2\2\2+.\3\2\2\2,*\3\2\2\2,-\3\2\2\2-/\3\2\2\2"+
+		".,\3\2\2\2/\61\7\6\2\2\60(\3\2\2\2\61\64\3\2\2\2\62\60\3\2\2\2\62\63\3"+
+		"\2\2\2\63\5\3\2\2\2\64\62\3\2\2\2\659\7\13\2\2\669\7\f\2\2\679\5\4\3\2"+
+		"8\65\3\2\2\28\66\3\2\2\28\67\3\2\2\29\7\3\2\2\2:=\7\13\2\2;=\5\4\3\2<"+
+		":\3\2\2\2<;\3\2\2\2=\t\3\2\2\2>?\7\7\2\2?@\7\r\2\2@I\7\6\2\2AE\7\3\2\2"+
+		"BD\5\b\5\2CB\3\2\2\2DG\3\2\2\2EC\3\2\2\2EF\3\2\2\2FH\3\2\2\2GE\3\2\2\2"+
+		"HJ\7\4\2\2IA\3\2\2\2IJ\3\2\2\2JU\3\2\2\2KO\7\5\2\2LN\5\6\4\2ML\3\2\2\2"+
+		"NQ\3\2\2\2OM\3\2\2\2OP\3\2\2\2PR\3\2\2\2QO\3\2\2\2RT\7\6\2\2SK\3\2\2\2"+
+		"TW\3\2\2\2US\3\2\2\2UV\3\2\2\2VX\3\2\2\2WU\3\2\2\2XY\5\f\7\2YZ\7\b\2\2"+
+		"Z[\7\r\2\2[\\\7\6\2\2\\\13\3\2\2\2]b\7\13\2\2^b\7\f\2\2_b\5\4\3\2`b\5"+
+		"\n\6\2a]\3\2\2\2a^\3\2\2\2a_\3\2\2\2a`\3\2\2\2be\3\2\2\2ca\3\2\2\2cd\3"+
+		"\2\2\2d\r\3\2\2\2ec\3\2\2\2fg\7\t\2\2gh\5\22\n\2hi\7\t\2\2i\17\3\2\2\2"+
+		"jk\7\n\2\2kl\5\24\13\2lm\7\n\2\2m\21\3\2\2\2nr\7\13\2\2or\7\f\2\2pr\5"+
+		"\4\3\2qn\3\2\2\2qo\3\2\2\2qp\3\2\2\2r\23\3\2\2\2sv\5\22\n\2tv\5\n\6\2"+
+		"us\3\2\2\2ut\3\2\2\2v\25\3\2\2\2\21\33\"&,\628<EIOUacqu";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
