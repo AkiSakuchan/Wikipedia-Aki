@@ -8,7 +8,7 @@ command : COMMAND ('[' option_args ']')? ('{' necessary_args '}')*;
 necessary_args : necessary_arg*;
 necessary_arg : PLAIN_TEXT | BRACKET1 | BRACKET2 | SYMBOL_ARGS | command | math_inline;
 option_args : option_arg*;
-option_arg : PLAIN_TEXT | command | math_inline;
+option_arg : PLAIN_TEXT | SYMBOL_ARGS | command | math_inline;
 
 newcommand : '\\newcommand{' COMMAND '}' ( '[' DIGIT ']')? ('[' option_args ']')? '{' necessary_args '}';
 
