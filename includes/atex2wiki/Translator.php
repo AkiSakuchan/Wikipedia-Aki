@@ -25,7 +25,6 @@ class Listener extends atexBaseListener
     private array $in_math_display;
 
     private string $id;
-    private string $page;
 
     public function enterStart(Context\StartContext $ctx):void
     {
@@ -57,19 +56,22 @@ class Listener extends atexBaseListener
 
     public function exitCommand(Context\CommandContext $ctx):void
     {
-        if($ctx->COMMAND()->getText() == '\\ref')
+        $COMMAND = $ctx->COMMAND();
+        $option_args = $ctx->option_args();
+        $necessary_args = $ctx->necessary_args();
+        if($COMMAND->getText() == '\ref')
         {
             $ret = '<cref ';
-            $necessary_args = $ctx->necessary_args();
+            
             if(count($necessary_args) > 1)
             {
-                throw new SyntaxError("命令参数太多", $ctx->COMMAND()->getSymbol()->getLine());
+                throw new SyntaxError("命令参数太多", $COMMAND->getSymbol()->getLine());
             }
             else if(count($necessary_args) < 1)
             {
-                throw new SyntaxError("命令参数太少", $ctx->COMMAND()->getSymbol()->getLine());
+                throw new SyntaxError("命令参数太少", $COMMAND->getSymbol()->getLine());
             }
-            $option_args = $ctx->option_args();
+            
             if($option_args != null && $option_args->getText() != '')
             {
                 $ret .= 'page="' . $option_args->getText() .'" ';
@@ -79,11 +81,29 @@ class Listener extends atexBaseListener
 
             return;
         }
+
+        if($COMMAND->getText() == '\label')
+        {
+            if($option_args != null && $option_args->getText() !='')
+            {
+                throw new SyntaxError("这里的参数应该用花括号", $COMMAND->getSymbol()->getLine());
+            }
+            if(count($necessary_args) > 1)
+            {
+                throw new SyntaxError("命令参数太多", $COMMAND->getSymbol()->getLine());
+            }
+            else if(count($necessary_args) < 1)
+            {
+                throw new SyntaxError("命令参数太少", $COMMAND->getSymbol()->getLine());
+            }
+
+            $this->id = $necessary_args[0]->getText();
+        }
     }
 }
 
 $text = 'a\ref[局部紧空间]{单点紧化}
-\ref{anb}{}';
+\label{anb}';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);
