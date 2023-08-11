@@ -4,15 +4,15 @@ start : command | environment | math_inline | math_display | multi_plain_text | 
 
 multi_plain_text : PLAIN_TEXT | SYMBOL_VERTICAL;
 
-command : COMMAND ('[' option_args ']')? ('{' necessary_args '}')*;
+command : COMMAND ('[' option_args ']')* ('{' necessary_args '}')*;
 necessary_args : necessary_arg*;
 necessary_arg : PLAIN_TEXT | BRACKET1 | BRACKET2 | SYMBOL_ARGS | command | math_inline;
 option_args : option_arg*;
 option_arg : PLAIN_TEXT | SYMBOL_ARGS | command | math_inline;
 
-newcommand : '\\newcommand{' COMMAND '}' ( '[' DIGIT ']')? ('[' option_args ']')? '{' necessary_args '}';
+newcommand : '\\newcommand{' COMMAND '}' ('[' option_args ']')* '{' necessary_args '}';
 
-environment : '\\begin{' LETTERS '}' ('[' option_args ']')? ('{' necessary_args '}')* in_math_display+ '\\end{' LETTERS '}';
+environment : '\\begin{' LETTERS '}' ('[' option_args ']')* ('{' necessary_args '}')* in_math_display+ '\\end{' LETTERS '}';
 
 math_inline : '$' in_math_inline+ '$';
 math_display : '$$' in_math_display+ '$$';
