@@ -12,7 +12,8 @@ option_arg : PLAIN_TEXT | SYMBOL_ARGS | command | math_inline;
 
 newcommand : '\\newcommand{' COMMAND '}' ('[' option_args ']')* '{' necessary_args '}';
 
-environment : '\\begin{' LETTERS '}' ('[' option_args ']')* ('{' necessary_args '}')* in_math_display+ '\\end{' LETTERS '}';
+environment : '\\begin{' PLAIN_TEXT '}' ('[' option_args ']')* ('{' necessary_args '}')* in_env+ '\\end{' PLAIN_TEXT '}';
+in_env: command | environment | math_inline | math_display | multi_plain_text | in_math_display;
 
 math_inline : '$' in_math_inline+ '$';
 math_display : '$$' in_math_display+ '$$';
@@ -29,10 +30,10 @@ BRACKET1: ']';
 BRACKET2: '[';
 BRACE1 : '{';
 BRACE2 : '}';
-SYMBOL_MATH : [^_];
+SYMBOL_MATH : [^_&] | '\\''\\';
 SYMBOL_ARGS : '#' DIGIT;
 SYMBOL_VERTICAL : [\n\r];
 
-LETTERS : LETTER+;
+fragment LETTERS : LETTER+;
 DIGIT : [0-9];
 COMMAND : '\\' LETTERS;
