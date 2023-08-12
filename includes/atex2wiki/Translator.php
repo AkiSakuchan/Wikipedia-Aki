@@ -540,21 +540,7 @@ class Listener extends atexBaseListener
         return "<proofc>$content</proofc>";
     }
 }
-
-$text = '\newcommand{\R}{\mathbb{R}}
-$\frac{1}{2}$
-
-\begin{proofc}
-$$
-a & b \\\\
-c & d\R
-\backslash
-$$
-\{    \}
-\^ \_ \& \# \%
-\end{proof}
-\en{a}';
-function Translator(string $text, string $preText = ''):string|array
+function Translator(string $text, string $preText = ''):array
 {
     $source = $preText . $text;
     $escapedChar = ['{', '}', '^', '_', '&', '#', '$', '%', 'backslash'];
@@ -593,12 +579,10 @@ function Translator(string $text, string $preText = ''):string|array
 
     if($parser->getNumberOfSyntaxErrors() > 0)
     {
-        return [$outputText, $errorListener->errorOut];
+        return [false, $outputText, $errorListener->errorOut];
     }
     else
     {
-        return $outputText;
+        return [true, $outputText];
     }
 }
-
-var_dump( Translator($text) );
