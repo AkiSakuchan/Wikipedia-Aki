@@ -65,7 +65,7 @@ class Listener extends atexBaseListener
 
         $COMMAND = $ctx->COMMAND();
         $name = $COMMAND->getText();
-        $option_args = '';
+        $option_args = null;
 
         // 检查可选参数数量
         if($ctx->option_args() != null)
@@ -94,7 +94,7 @@ class Listener extends atexBaseListener
                 throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
             }
             
-            if($option_args != '')
+            if($option_args !== null && $option_args !== '')
             {
                 $ret .= 'page="' . $option_args .'" ';
             }
@@ -106,10 +106,10 @@ class Listener extends atexBaseListener
 
         if($name == '\label')
         {
-            if($option_args != '')
+            if($option_args !== null)
             {
                 $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx, "$name 的参数应该用花括号");
+                throw new RecognitionException(null, null, $ctx, "$name 命令的参数应该用花括号");
             }
             if(count($necessary_args) > 1)
             {
@@ -139,7 +139,68 @@ class Listener extends atexBaseListener
 
         if(array_key_exists($name, $this->newcommands))
         {
-            ;
+            $define = $this->newcommands[$name];
+            $out = $define->content;
+
+            if($define->default_arg === null)
+            {
+                if($option_args !== null)
+                {
+                    $this->errorOccurred = true;
+                    throw new RecognitionException(null,null,$ctx,"$name 命令的第一个参数应该用花括号");
+                }
+                else
+                {
+                    if(count($necessary_real_args) > $define->args_number)
+                    {
+                        $this->errorOccurred = true;
+                        throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
+                    }
+                    else if(count($necessary_real_args) < $define->args_number)
+                    {
+                        $this->errorOccurred = true;
+                        throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
+                    }
+
+                    // 把命令定义中的符号参数替换为实际参数
+                    $i = 1;
+                    foreach($necessary_real_args as $real_arg)
+                    {
+                        $out = str_replace("#$i", $real_arg, $out);
+                        $i++;
+                    }
+                }
+            }
+            else
+            {
+                if(count($necessary_real_args) + 1 > $define->args_number)
+                {
+                    $this->errorOccurred = true;
+                    throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
+                }
+                else if(count($necessary_real_args) + 1 < $define->args_number)
+                {
+                    $this->errorOccurred = true;
+                    throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
+                }
+
+                if($option_args !== null)
+                {
+                    // 替换默认参数
+                    $out = str_replace('#1', $option_args,$out);
+                }
+                else
+                {
+                    $out = str_replace('#1', $define->default_arg, $out);
+                }
+
+                $i = 2;
+                foreach($necessary_real_args as $real_arg)
+                {
+                    $out = str_replace("#$i", $real_arg, $out);
+                    $i++;
+                }
+            }
         }
         else
         {
@@ -228,19 +289,19 @@ class Listener extends atexBaseListener
 
         $COMMAND = $ctx->COMMAND();
         $option_args = $ctx->option_args();
-        $default_arg = null;
         $number = 0;
-        
+        $default_arg = null;
+
         if($option_args != null )
         {
             switch(count($option_args))
             {
-                case 1: $number = $this->isValid(array_pop($this->option_args));break;
+                case 1: $number = $this->isValid(array_pop($this->option_args)); $default_arg = null;break;
                 case 2: $default_arg = array_pop($this->option_args); $number = $this->isValid(array_pop($this->option_args));break;
                 default: $this->errorOccurred = true; throw new RecognitionException(null, null, $ctx, "定义命令 $COMMAND 时参数太多");
             }
             
-            if($number == false)
+            if($number === false)
             {
                 $this->errorOccurred = true;
                 throw new RecognitionException(null, null, $ctx, '定义命令时参数数量必须是1-9的数字');
@@ -262,8 +323,7 @@ class Listener extends atexBaseListener
     }
 }
 
-$text = '\newcommand{\R}[1][]{\mathbb{#1}}
-\en{a}';
+$text = '\en{a}';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);
