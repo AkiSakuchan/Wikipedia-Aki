@@ -17,7 +17,7 @@ class Listener extends atexBaseListener
     private array $math_inline;
     private array $math_display;
     private array $multi_plain_text;
-    private array $newcommands=[];
+    private array $newcommands = [];
 
     private array $option_args;
     private array $option_arg;
@@ -26,8 +26,9 @@ class Listener extends atexBaseListener
 
     private array $in_math_inline;
     private array $in_math_display;
+    private array $in_env;
 
-    private string $id;
+    private array $id;
 
     public function enterStart(Context\StartContext $ctx):void
     {
@@ -35,6 +36,7 @@ class Listener extends atexBaseListener
 
         $this->command = [];
         $this->environment = [];
+        $this->id = [];
         $this->math_inline = [];
         $this->math_display = [];
         $this->multi_plain_text = [];
@@ -44,6 +46,7 @@ class Listener extends atexBaseListener
         $this->necessary_args = [];
         $this->in_math_display = [];
         $this->in_math_inline = [];
+        $this->in_env = [];
     }
     public function exitStart(Context\StartContext $ctx):void
     {
@@ -63,8 +66,7 @@ class Listener extends atexBaseListener
     {
         if($this->errorOccurred) return;
 
-        $COMMAND = $ctx->COMMAND();
-        $name = $COMMAND->getText();
+        $name = $ctx->COMMAND()->getText();
         $option_args = null;
 
         // 检查可选参数数量
@@ -121,8 +123,8 @@ class Listener extends atexBaseListener
                 $this->errorOccurred = true;
                 throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
             }
-
-            $this->id = array_pop($this->necessary_args);
+            array_push($this->command, '');
+            array_push($this->id , array_pop($this->necessary_args));
             return;
         }
 
@@ -287,7 +289,7 @@ class Listener extends atexBaseListener
     {
         if($this->errorOccurred) return;
 
-        $COMMAND = $ctx->COMMAND();
+        $name = $ctx->COMMAND()->getText();
         $option_args = $ctx->option_args();
         $number = 0;
         $default_arg = null;
@@ -298,7 +300,7 @@ class Listener extends atexBaseListener
             {
                 case 1: $number = $this->isValid(array_pop($this->option_args));break;
                 case 2: $default_arg = array_pop($this->option_args); $number = $this->isValid(array_pop($this->option_args));break;
-                default: $this->errorOccurred = true; throw new RecognitionException(null, null, $ctx, "定义命令 $COMMAND 时参数太多");
+                default: $this->errorOccurred = true; throw new RecognitionException(null, null, $ctx, "定义命令 $name 时参数太多");
             }
             
             if($number === false)
@@ -310,7 +312,7 @@ class Listener extends atexBaseListener
         
         $content = array_pop($this->necessary_args);
         
-        $this->newcommands[$COMMAND->getText()] = new newCommand($content, $number, $default_arg);
+        $this->newcommands[$name] = new newCommand($content, $number, $default_arg);
     }
 
     private function isValid(string $str):int|false
@@ -377,12 +379,174 @@ class Listener extends atexBaseListener
 
         array_push($this->math_display, '<yamath display="true">' . $content . '</yamath>');
     }
+
+    public function exitIn_env(Context\In_envContext $ctx):void
+    {
+        if($ctx->command() != null) array_push($this->in_env, array_pop($this->command));
+        else if($ctx->environment() != null) array_push($this->in_env, array_pop($this->environment));
+        else if($ctx->math_inline() != null) array_push($this->in_env, array_pop($this->math_inline));
+        else if($ctx->math_display() != null) array_push($this->in_env, array_pop($this->math_display));
+        else if($ctx->multi_plain_text() != null) array_push($this->in_env, array_pop($this->multi_plain_text));
+        else if($ctx->in_math_display() != null) array_push($this->in_env, array_pop($this->in_math_display));
+    }
+
+    public function exitEnvironment(Context\EnvironmentContext $ctx):void
+    {
+        if($this->errorOccurred) return;
+
+        if($ctx->PLAIN_TEXT(0)->getText() != $ctx->PLAIN_TEXT(1)->getText())
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx, "环境的前后名字不相同");
+        }
+
+        $name = $ctx->PLAIN_TEXT(0)->getText();
+
+        $option_args = null;
+
+        // 检查可选参数数量
+        if($ctx->option_args() != null)
+        {
+            if(count($ctx->option_args()) > 1)
+            {
+                $this->errorOccurred = true;
+                throw new RecognitionException(null, null, $ctx,"$name 命令中给了太多的可选参数");
+            }
+            $option_args = array_pop($this->option_args);
+        }
+        
+        $necessary_args = [];
+        if($ctx->necessary_args() != null)
+        {
+            foreach($ctx->necessary_args() as $i)
+            {
+                array_unshift($necessary_args, array_pop($this->necessary_args));
+            }
+        }
+
+        $content = '';
+        foreach($ctx->in_env() as $i)
+        {
+            $tmp = array_pop($this->in_env);
+            $content = $tmp . $content;
+        }
+        
+        $out = $this->commonEnvironment($ctx, $name, $content, $option_args, $necessary_args);
+        if($out !== false)
+        {
+            array_push($this->environment, $out);
+            return;
+        }
+
+        $out = $this->mathEnvironment($ctx, $name, $content, $option_args, $necessary_args);
+        if($out !== false)
+        {
+            array_push($this->environment, $out);
+            return;
+        }
+
+        $out = $this->proofcEnvironment($ctx, $name, $content, $option_args, $necessary_args);
+        if($out !== false)
+        {
+            array_push($this->environment, $out);
+            return;
+        }
+
+        $out = '\begin{' . $name . '}';
+        if($option_args !== null)
+        {
+            $out .= "[$option_args]";
+        }
+        foreach($necessary_args as $arg)
+        {
+            $out .= '{' . $arg . '}';
+        }
+        $out .= $content . '\end{' . $name . '}';
+
+        array_push($this->environment, $out);
+    }
+
+    private function commonEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
+    {
+        // 识别定理环境
+        if(preg_match('/^(theorem)|(lemma)|(proposition)|(corollary)|(definition)|(example)|(remark)$/', $name))
+        {
+            if(count($necessary_args) > 0)
+            {
+                $this->errorOccurred = true;
+                throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
+            }
+
+            $out = "<$name";
+
+            if(($id = array_pop($this->id)) != '')
+            {
+                $out .=  ' id="' . $id . '"';
+                $content = "\n" . trim($content) . "\n";
+            }
+
+            if($option_args !== null)
+            {
+                $out .= ' name="' . $option_args . '"';
+            }
+            $out .= '>';
+
+            $out .= $content;
+            $out .= "</$name>";
+            return $out;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private function mathEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
+    {
+        // 数学和交换图环境
+        if(!preg_match('/^(tikzcd)|(equation)$/', $name)) return false;
+
+        if($name == 'tikzcd') $tag = 'tikzcd';
+        else $tag = 'math';
+
+        if($option_args !== null || count($necessary_args) > 0)
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
+        }
+
+        $out = "<$tag";
+        if(($id = array_pop($this->id)) != '')
+        {
+            $out .=  ' id="' . $id . '"';
+            $content = "\n" . trim($content) . "\n";
+        }
+        $out .= '>';
+        $out .= $content . "</$tag>";
+        return $out;
+    }
+
+    private function proofcEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
+    {
+        // 可折叠证明环境
+        if($name != 'proofc') return false;
+
+        if($option_args !== null || count($necessary_args) > 0)
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
+        }
+
+        return "<proofc>$content</proofc>";
+    }
 }
 
-$text = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}\mathrm{#1}}
+$text = '\begin{proofc}
 $$
-\frac{\R{H}}{2}
+a & b \\\\
+c & d
 $$
+\end{proofc}
 \en{a}';
 
 $input = InputStream::fromString($text);
