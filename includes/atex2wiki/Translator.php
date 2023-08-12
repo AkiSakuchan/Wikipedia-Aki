@@ -542,6 +542,8 @@ class Listener extends atexBaseListener
 }
 
 $text = '\newcommand{\R}{\mathbb{R}}
+$\frac{1}{2}$
+
 \begin{proofc}
 $$
 a & b \\\\
@@ -550,7 +552,7 @@ c & d\R
 $$
 \{    \}
 \^ \_ \& \# \%
-\end{proofc}
+\end{proof}
 \en{a}';
 function Translator(string $text, string $preText = ''):string|array
 {
@@ -571,7 +573,8 @@ function Translator(string $text, string $preText = ''):string|array
     $parser = new atexParser($tokens);
     $listener = new Listener();
     $parser->addParseListener($listener);
-    $parser->addErrorListener(new ErrorListener);
+    $errorListener = new ErrorListener();
+    $parser->addErrorListener($errorListener);
     $parser->begin();
 
     // 把解析后的文本中的特殊字符串换回转义字符
@@ -588,7 +591,14 @@ function Translator(string $text, string $preText = ''):string|array
         }
     }
 
-    return $outputText;
+    if($parser->getNumberOfSyntaxErrors() > 0)
+    {
+        return [$outputText, $errorListener->errorOut];
+    }
+    else
+    {
+        return $outputText;
+    }
 }
 
-echo Translator($text);
+var_dump( Translator($text) );

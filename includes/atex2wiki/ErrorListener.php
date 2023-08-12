@@ -5,13 +5,14 @@ use Antlr\Antlr4\Runtime\Recognizer;
 
 class ErrorListener extends BaseErrorListener
 {
+    public string $errorOut = '';
     public function syntaxError(Recognizer $recognizer, 
     ?object $offendingSymbol, 
     int $line, 
     int $charPositionInLine, 
     string $msg, 
-    ?RecognitionException $exception):void
+    ?RecognitionException $err):void
     {
-        echo "第 $line 行第 $charPositionInLine 处语法错误: $msg \n"; 
+        $this->errorOut .= "第 $line 行第 $charPositionInLine 处语法错误: $msg \n"; 
     }
 }
