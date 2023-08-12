@@ -1,4 +1,5 @@
 <?php
+require_once 'atex2wiki/Translator.php';
 
 use MediaWiki\MediaWikiServices;
 
@@ -6,7 +7,29 @@ class tagHooks
 {
     private static $crossRefData = array();     // 用来储存引用编号和名称
 
-    private static $socketPath = '/tmp/php-js.sock';
+    private static $socketPath = '/tmp/php-js.sock';    // Unix域套接字路径, 未来会添加设置项.
+
+    // 预定义的 TeX 命令, 未来会添加设置页面
+    private static $preText = '\newcommand{\R}{\mathbb{R}}
+    \newcommand{\Cpx}{\mathbb{C}}
+    \newcommand{\Z}{\mathbb{Z}}
+    \newcommand{\H}{\mathbb{H}}
+    \newcommand{\Hom}{\operatorname{Hom}}
+    \newcommand{\GL}{\operatorname{GL}}
+    \newcommand{\SL}{\operatorname{SL}}
+    \newcommand{\O}{\operatorname{O}}
+    \newcommand{\U}{\operatorname{U}}
+    \newcommand{\SU}{\operatorname{SU}}
+    \newcommand{\Sp}{\operatorname{Sp}}
+    \newcommand{\gl}{\mathfrak{gl}}
+    \newcommand{\sl}{\mathfrak{sl}}
+    \newcommand{\o}{\mathfrak{o}}
+    \newcommand{\u}{\mathfrak{u}}
+    \newcommand{\su}{\mathfrak{su}}
+    \newcommand{\sp}{\mathfrak{sp}}
+    \newcommand{\Pic}{\operatorname{Pic}}
+    \newcommand{\NS}{\operatorname{NS}}
+    ';
 
     public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater)
     {
@@ -52,9 +75,9 @@ class tagHooks
             return true;
         }
 
-        // 在文档中搜索是否有<no replace dollar>如果有则不替换 $ 和 $$.
+        // 在文档中搜索是否有<no atex>如果有则不把文本视为atex也不解析.
         $isReplaceSharp = true;
-        $text = preg_replace_callback('/<no replace dollar>/',
+        $text = preg_replace_callback('/<no atex>/',
         function($matches) use(&$isReplaceSharp) : string
         {
             $isReplaceSharp = false;
@@ -63,41 +86,23 @@ class tagHooks
 
         if($isReplaceSharp)
         {
-            // 把$换成<yamath display="false">标签
-            $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$(?!\$)/',
-            function($matches): string
+            $parsingOutput = Translator($text, self::$preText);
+            if($parsingOutput[0]) $text = $parsingOutput[1];
+            else
             {
-                static $state = true;
-                if($state)
+                $preLine = substr_count(self::$preText, "\n");
+                $errStr = "\n";
+                foreach($parsingOutput[2] as $errOut)
                 {
-                    $state = false;
-                    return '<yamath display="false">';
+                    $realLine = $errOut->line - $preLine;
+                    $errStr .= "第 $realLine 行 " . $errOut->$charPosInLine . " 处有错误: " . $errOut->msg . "\n";
                 }
-                else
-                {
-                    $state = true;
-                    return '</yamath>';
-                }
-            },
-            $text);
-
-            // 把$$替换成<yamath display="true">标签
-            $text = preg_replace_callback('/(?<!(\\\|(?<!\\\)\$))\$\$(?!\$)/',
-            function($matches): string
-            {
-                static $state = true;
-                if($state)
-                {
-                    $state = false;
-                    return '<yamath display="true">';
-                }
-                else
-                {
-                    $state = true;
-                    return '</yamath>';
-                }
-            },
-            $text);
+                $text = $parsingOutput[1] . $errStr;
+            }
+        }
+        else
+        {
+            return true;
         }
 
         //把id和#开头的链接id都转化为url编码.
@@ -299,7 +304,6 @@ class tagHooks
     {
         // 本段程序把tikz的代码用httppost发送到127.0.0.1:9292去, 将返回svg图片代码
         $ch = curl_init('http://127.0.0.1');
-        self::preProcess($input);
         $source = array('type' => 'tikzcd', 'tex' => $input);
         if( array_key_exists('option', $args))
         {
@@ -360,16 +364,14 @@ class tagHooks
 
     private static function realMathRender(string $tex, bool $display): string
     {
-        self::preProcess($tex);   // 替换一些字符.
-
         $socket = socket_create(AF_UNIX, SOCK_STREAM, 0);
         if( $socket == false )
         {
-            echo '创建套接字失败';
+            return '创建套接字失败';
         }
         if(!socket_connect($socket, self::$socketPath))
         {
-            echo '无法连接套接字';
+            return '无法连接套接字';
         }
 
         $send = json_encode(array('display'=> $display, 'tex'=> $tex));
@@ -510,37 +512,5 @@ class tagHooks
             return '注';
         }
         else return '';
-    }
-
-    private static function preProcess(string &$text)
-    {
-        $replace = array(
-            'R' => 'mathbb{R}',
-            'Cpx' => 'mathbb{C}',
-            'Z' => 'mathbb{Z}',
-            'H' => 'mathbb{H}',
-            'Hom' =>    'operatorname{Hom}',
-            'GL' =>     'operatorname{GL}',
-            'SL' =>     'operatorname{SL}',
-            'O'  =>    'operatorname{O}',
-            'SO' =>     'operatorname{SO}',
-            'U' =>      'operatorname{U}',
-            'SU' =>     'operatorname{SU}',
-            'Sp' =>     'operatorname{Sp}',
-            'gl' =>    'mathfrak{gl}',
-            'sl' =>     'mathfrak{sl}',
-            'o' =>      'mathfrak{o}',
-            'so' =>     'mathfrak{so}',
-            'u' =>      'mathfrak{u}',
-            'su' =>     'mathfrak{su}',
-            'sp' =>     'mathfrak{sp}',
-            'Pic' =>    'operatorname{Pic}',
-            'NS' =>     'operatorname{NS}'
-        );
-
-        foreach($replace as $key => $value )
-        {
-            $text = preg_replace("/\\\\$key([_\\W])/", "\\\\$value$1", $text);
-        }
     }
 }
