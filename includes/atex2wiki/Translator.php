@@ -541,23 +541,54 @@ class Listener extends atexBaseListener
     }
 }
 
-$text = '\begin{proofc}
+$text = '\newcommand{\R}{\mathbb{R}}
+\begin{proofc}
 $$
 a & b \\\\
-c & d
+c & d\R
+\backslash
 $$
+\{    \}
+\^ \_ \& \# \%
 \end{proofc}
 \en{a}';
+function Translator(string $text, string $preText = ''):string|array
+{
+    $source = $preText . $text;
+    $escapedChar = ['{', '}', '^', '_', '&', '#', '$', '%', 'backslash'];
+    $timestamp = time();
 
-$input = InputStream::fromString($text);
-$lexer = new atexLexer($input);
-$tokens = new CommonTokenStream($lexer);
-$parser = new atexParser($tokens);
-$listener = new Listener();
-$parser->addParseListener($listener);
-$parser->addErrorListener(new ErrorListener);
-$parser->begin();
+    // 把待处理文本中的转义字符替换为特殊字符串
+    $inputText = $source;
+    foreach($escapedChar as $char)
+    {
+        $inputText = str_replace("\\$char", md5($char) . $timestamp, $inputText);
+    }
 
-echo $parser->getNumberOfSyntaxErrors();
+    $input = InputStream::fromString($inputText);
+    $lexer = new atexLexer($input);
+    $tokens = new CommonTokenStream($lexer);
+    $parser = new atexParser($tokens);
+    $listener = new Listener();
+    $parser->addParseListener($listener);
+    $parser->addErrorListener(new ErrorListener);
+    $parser->begin();
 
-echo $listener->out;
+    // 把解析后的文本中的特殊字符串换回转义字符
+    $outputText = $listener->out;
+    foreach($escapedChar as $char)
+    {
+        if($char != 'backslash')
+        {
+            $outputText = str_replace(md5($char) . $timestamp, $char, $outputText);
+        }
+        else
+        {
+            $outputText = str_replace(md5($char) . $timestamp, '\\', $outputText);
+        }
+    }
+
+    return $outputText;
+}
+
+echo Translator($text);
