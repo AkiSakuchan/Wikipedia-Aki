@@ -296,7 +296,7 @@ class Listener extends atexBaseListener
         {
             switch(count($option_args))
             {
-                case 1: $number = $this->isValid(array_pop($this->option_args)); $default_arg = null;break;
+                case 1: $number = $this->isValid(array_pop($this->option_args));break;
                 case 2: $default_arg = array_pop($this->option_args); $number = $this->isValid(array_pop($this->option_args));break;
                 default: $this->errorOccurred = true; throw new RecognitionException(null, null, $ctx, "定义命令 $COMMAND 时参数太多");
             }
@@ -321,9 +321,69 @@ class Listener extends atexBaseListener
         if($ret == 0) return false;
         else return $ret;
     }
+
+    public function exitIn_math_inline(Context\In_math_inlineContext $ctx):void
+    {
+        if($ctx->command() != null)
+        {
+            array_push($this->in_math_inline, array_pop($this->command));
+        }
+        else
+        {
+            array_push($this->in_math_inline, $ctx->getText());
+        }
+    }
+
+    public function exitMath_inline(Context\Math_inlineContext $ctx):void
+    {
+        $content = '';
+        foreach($ctx->in_math_inline() as $i)
+        {
+            $tmp = array_pop($this->in_math_inline);
+            $content = $tmp . $content;
+        }
+
+        array_push($this->math_inline, '<yamath display="false">' . $content . '</yamath>');
+    }
+
+    public function exitIn_math_display(Context\In_math_displayContext $ctx):void
+    {
+        if($ctx->multi_plain_text() != null)
+        {
+            array_push($this->in_math_display, array_pop($this->multi_plain_text));
+        }
+        else if($ctx->command() != null)
+        {
+            array_push($this->in_math_display, array_pop($this->command));
+        }
+        else if($ctx->environment() != null)
+        {
+            array_push($this->in_math_display, array_pop($this->environment));
+        }
+        else
+        {
+            array_push($this->in_math_display, $ctx->getText());
+        }
+    }
+
+    public function exitMath_display(Context\Math_displayContext $ctx):void
+    {
+        $content = '';
+        foreach($ctx->in_math_display() as $i)
+        {
+            $tmp = array_pop($this->in_math_display);
+            $content = $tmp . $content;
+        }
+
+        array_push($this->math_display, '<yamath display="true">' . $content . '</yamath>');
+    }
 }
 
-$text = '\en{a}';
+$text = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}\mathrm{#1}}
+$$
+\frac{\R{H}}{2}
+$$
+\en{a}';
 
 $input = InputStream::fromString($text);
 $lexer = new atexLexer($input);
@@ -334,6 +394,6 @@ $parser->addParseListener($listener);
 $parser->addErrorListener(new ErrorListener);
 $parser->begin();
 
-//echo $parser->getNumberOfSyntaxErrors();
+echo $parser->getNumberOfSyntaxErrors();
 
 echo $listener->out;
