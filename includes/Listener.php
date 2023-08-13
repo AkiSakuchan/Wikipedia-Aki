@@ -1,36 +1,38 @@
 <?php
-require_once 'vendor/autoload.php';
+require_once '../vendor/autoload.php';
 require_once 'ErrorListener.php';
 require_once 'newCommand.php';
+require_once 'newEnvironment.php';
 
-use Antlr\Antlr4\Runtime\CommonTokenStream;
+
 use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
-use Antlr\Antlr4\Runtime\InputStream;
+
 
 class Listener extends atexBaseListener
 {
     private bool $errorOccurred;
     public string $out='';
 
-    private array $command;
-    private array $environment;
-    private array $math_inline;
-    private array $math_display;
-    private array $multi_plain_text;
-    private array $newcommands = [];
+    protected array $command;
+    protected array $environment;
+    protected array $math_inline;
+    protected array $math_display;
+    protected array $multi_plain_text;
+    protected array $newcommands = [];
+    protected array $newenvironments = [];
 
-    private array $option_args;
-    private array $option_arg;
-    private array $necessary_args;
-    private array $necessary_arg;
+    protected array $option_args;
+    protected array $option_arg;
+    protected array $necessary_args;
+    protected array $necessary_arg;
 
-    private array $in_math_inline;
-    private array $in_math_display;
-    private array $in_env;
+    protected array $in_math_inline;
+    protected array $in_math_display;
+    protected array $in_env;
 
-    private array $escaped_char;
+    protected array $escaped_char;
 
-    private array $id;
+    protected array $id;
 
     public function enterStart(Context\StartContext $ctx):void
     {
@@ -63,8 +65,7 @@ class Listener extends atexBaseListener
 
     public function exitEscaped_char(Context\Escaped_charContext $ctx):void
     {
-        if($ctx->getText() == '\\backslash') array_push($this->escaped_char, '\\');
-        else array_push($this->escaped_char, ltrim($ctx->getText(), '\\'));
+        array_push($this->escaped_char, ltrim($ctx->getText(), '\\'));
     }
 
     public function exitMulti_plain_text(Context\Multi_plain_textContext $ctx):void
@@ -90,93 +91,43 @@ class Listener extends atexBaseListener
             $option_args = array_pop($this->option_args);
         }
 
-        $necessary_args = $ctx->necessary_args();
-        if($name == '\ref')
-        {
-            $ret = '<cref ';
-            
-            if(count($necessary_args) > 1)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
-            }
-            else if(count($necessary_args) < 1)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
-            }
-            
-            if($option_args !== null && $option_args !== '')
-            {
-                $ret .= 'page="' . $option_args .'" ';
-            }
-            $ret .= 'id="' . array_pop($this->necessary_args) .'" />';
-            array_push($this->command,$ret);
-
-            return;
-        }
-
-        if($name == '\label')
-        {
-            if($option_args !== null)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx, "$name 命令的参数应该用花括号");
-            }
-            if(count($necessary_args) > 1)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
-            }
-            else if(count($necessary_args) < 1)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
-            }
-            array_push($this->command, '');
-            array_push($this->id , array_pop($this->necessary_args));
-            return;
-        }
-
         // 在option_args和necessary_args的监听函数中, 要保证每执行一次就压入一个字符串, 哪怕是空串
         // 从栈中取出相关参数
-        $necessary_real_args = [];
-        if($necessary_args != null)
+        $necessary_args = [];
+        if($ctx->necessary_args() != null)
         {
-            foreach($necessary_args as $i)
+            foreach($ctx->necessary_args() as $i)
             {
-                array_unshift($necessary_real_args, array_pop($this->necessary_args));
+                array_unshift($necessary_args, array_pop($this->necessary_args));
             }
         }
 
         if(array_key_exists($name, $this->newcommands))
         {
             $define = $this->newcommands[$name];
-            $out = $define->content;
+            $content = $define->content;
+            $option_args = $this->checkArgsNumber($name, $ctx, $define, $option_args, count($necessary_args));
 
-            if($define->default_arg === null)
+            if(is_string($content))
             {
-                if($option_args !== null)
+                if($option_args === null)
                 {
-                    $this->errorOccurred = true;
-                    throw new RecognitionException(null,null,$ctx,"$name 命令的第一个参数应该用花括号");
+                    // 把命令定义中的符号参数替换为实际参数
+                    $i = 1;
+                    $out = $content;
+                    foreach($necessary_args as $real_arg)
+                    {
+                        $out = str_replace("#$i", $real_arg, $out);
+                        $i++;
+                    }
                 }
                 else
                 {
-                    if(count($necessary_real_args) > $define->args_number)
-                    {
-                        $this->errorOccurred = true;
-                        throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
-                    }
-                    else if(count($necessary_real_args) < $define->args_number)
-                    {
-                        $this->errorOccurred = true;
-                        throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
-                    }
+                    $out = $content;
+                    $out = str_replace('#1', $option_args,$out);
 
-                    // 把命令定义中的符号参数替换为实际参数
-                    $i = 1;
-                    foreach($necessary_real_args as $real_arg)
+                    $i = 2;
+                    foreach($necessary_args as $real_arg)
                     {
                         $out = str_replace("#$i", $real_arg, $out);
                         $i++;
@@ -185,46 +136,73 @@ class Listener extends atexBaseListener
             }
             else
             {
-                if(count($necessary_real_args) + 1 > $define->args_number)
-                {
-                    $this->errorOccurred = true;
-                    throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
-                }
-                else if(count($necessary_real_args) + 1 < $define->args_number)
-                {
-                    $this->errorOccurred = true;
-                    throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
-                }
-
-                if($option_args !== null)
-                {
-                    // 替换默认参数
-                    $out = str_replace('#1', $option_args,$out);
-                }
-                else
-                {
-                    $out = str_replace('#1', $define->default_arg, $out);
-                }
-
-                $i = 2;
-                foreach($necessary_real_args as $real_arg)
-                {
-                    $out = str_replace("#$i", $real_arg, $out);
-                    $i++;
-                }
+                // 如果命令体是一个函数, 就调用它来处理
+                $out = $content($option_args, $necessary_args, $ctx);
             }
         }
         else
         {
             $out = $name;
             if($option_args != '') $out .= "[$option_args]";
-            foreach($necessary_real_args as $arg)
+            foreach($necessary_args as $arg)
             {
                 $out .='{' . $arg .'}';
             }
         }
         
         array_push($this->command, $out);
+    }
+
+    /**
+	 * {@inheritdoc}
+	 *
+	 * 检查环境和命令的参数数量, 并得到实际的可选参数
+	 */
+    private function checkArgsNumber(string $name, 
+                                    Antlr\Antlr4\Runtime\ParserRuleContext $ctx, 
+                                    newCommand|newEnvironment $define, 
+                                    string|null $option_arg, 
+                                    int $number):string|null
+    {
+        if($define->default_arg === null)
+        {
+            if($option_arg !== null)
+            {
+                $this->errorOccurred = true;
+                throw new RecognitionException(null,null,$ctx,"$name 命令的第一个参数应该用花括号");
+            }
+            else
+            {
+                $real_number = $number;
+            }
+            $real_option_arg = null;
+
+        }
+        else
+        {
+            $real_number = $number +1;
+            if($option_arg !== null)
+            {
+                $real_option_arg = $option_arg;
+            }
+            else
+            {
+                $real_option_arg = $define->default_arg;
+            }
+        }
+
+        if($real_number > $define->args_number)
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
+        }
+        else if($real_number < $define->args_number)
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
+        }
+
+        return $real_option_arg;
     }
 
     public function exitOption_arg(Context\Option_argContext $ctx):void
@@ -246,8 +224,7 @@ class Listener extends atexBaseListener
             $out = '';
             foreach($ctx->option_arg() as $i)
             {
-                $tmp = array_pop($this->option_arg);
-                $out = $tmp . $out;
+                $out = array_pop($this->option_arg) . $out;
             }
             array_push($this->option_args, $out);
         }
@@ -272,8 +249,7 @@ class Listener extends atexBaseListener
             $out = '';
             foreach($ctx->necessary_arg() as $i)
             {
-                $tmp = array_pop($this->necessary_arg);
-                $out = $tmp . $out;
+                $out = array_pop($this->necessary_arg) . $out;
             }
             array_push($this->necessary_args, $out);
         }
@@ -330,8 +306,7 @@ class Listener extends atexBaseListener
         $content = '';
         foreach($ctx->in_math_inline() as $i)
         {
-            $tmp = array_pop($this->in_math_inline);
-            $content = $tmp . $content;
+            $content = array_pop($this->in_math_inline) . $content;
         }
 
         array_push($this->math_inline, '<yamath display="false">' . $content . '</yamath>');
@@ -351,8 +326,7 @@ class Listener extends atexBaseListener
         $content = '';
         foreach($ctx->in_math_display() as $i)
         {
-            $tmp = array_pop($this->in_math_display);
-            $content = $tmp . $content;
+            $content = array_pop($this->in_math_display) . $content;
         }
 
         array_push($this->math_display, '<yamath display="true">' . $content . '</yamath>');
@@ -406,41 +380,28 @@ class Listener extends atexBaseListener
         $content = '';
         foreach($ctx->in_env() as $i)
         {
-            $tmp = array_pop($this->in_env);
-            $content = $tmp . $content;
+            $content = array_pop($this->in_env) . $content;
         }
         
-        $out = $this->commonEnvironment($ctx, $name, $content, $option_args, $necessary_args);
-        if($out !== false)
+        if(array_key_exists($name, $this->newenvironments))
         {
-            array_push($this->environment, $out);
-            return;
+            $define = $this->newenvironments[$name];
+            $option_args = $this->checkArgsNumber($name, $ctx, $define, $option_args, count($necessary_args));
+            $out = ($define->content)($option_args, $necessary_args, $content, $ctx);
         }
-
-        $out = $this->mathEnvironment($ctx, $name, $content, $option_args, $necessary_args);
-        if($out !== false)
+        else
         {
-            array_push($this->environment, $out);
-            return;
+            $out = '\begin{' . $name . '}';
+            if($option_args !== null)
+            {
+                $out .= "[$option_args]";
+            }
+            foreach($necessary_args as $arg)
+            {
+                $out .= '{' . $arg . '}';
+            }
+            $out .= $content . '\end{' . $name . '}';
         }
-
-        $out = $this->proofcEnvironment($ctx, $name, $content, $option_args, $necessary_args);
-        if($out !== false)
-        {
-            array_push($this->environment, $out);
-            return;
-        }
-
-        $out = '\begin{' . $name . '}';
-        if($option_args !== null)
-        {
-            $out .= "[$option_args]";
-        }
-        foreach($necessary_args as $arg)
-        {
-            $out .= '{' . $arg . '}';
-        }
-        $out .= $content . '\end{' . $name . '}';
 
         array_push($this->environment, $out);
     }
@@ -503,65 +464,5 @@ class Listener extends atexBaseListener
         $out .= '>';
         $out .= $content . "</$tag>";
         return $out;
-    }
-
-    private function proofcEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
-    {
-        // 可折叠证明环境
-        if($name != 'proofc') return false;
-
-        if($option_args !== null || count($necessary_args) > 0)
-        {
-            $this->errorOccurred = true;
-            throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
-        }
-
-        return "<proofc>$content</proofc>";
-    }
-}
-function Translator(string $text, string $preText = ''):array
-{
-    $source = $preText . $text;
-    $escapedChar = ['{', '}', '^', '_', '&', '#', '$', '%', 'backslash'];
-    $timestamp = time();
-
-    // 把待处理文本中的转义字符替换为特殊字符串
-    $inputText = $source;
-    foreach($escapedChar as $char)
-    {
-        $inputText = str_replace("\\$char", md5($char) . $timestamp, $inputText);
-    }
-
-    $input = InputStream::fromString($inputText);
-    $lexer = new atexLexer($input);
-    $tokens = new CommonTokenStream($lexer);
-    $parser = new atexParser($tokens);
-    $listener = new Listener();
-    $parser->addParseListener($listener);
-    $errorListener = new ErrorListener();
-    $parser->addErrorListener($errorListener);
-    $parser->begin();
-
-    // 把解析后的文本中的特殊字符串换回转义字符
-    $outputText = $listener->out;
-    foreach($escapedChar as $char)
-    {
-        if($char != 'backslash')
-        {
-            $outputText = str_replace(md5($char) . $timestamp, $char, $outputText);
-        }
-        else
-        {
-            $outputText = str_replace(md5($char) . $timestamp, '\\', $outputText);
-        }
-    }
-
-    if($parser->getNumberOfSyntaxErrors() > 0)
-    {
-        return [false, $outputText, $errorListener->errorOut];
-    }
-    else
-    {
-        return [true, $outputText];
     }
 }
