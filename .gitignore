@@ -10,3 +10,4 @@ includes/atex2wiki/atexLexer.php
 includes/atex2wiki/atexLexer.tokens
 includes/atex2wiki/atexListener.php
 includes/atex2wiki/atexParser.php
+release/

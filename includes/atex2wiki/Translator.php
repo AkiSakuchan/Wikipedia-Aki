@@ -28,6 +28,8 @@ class Listener extends atexBaseListener
     private array $in_math_display;
     private array $in_env;
 
+    private array $escaped_char;
+
     private array $id;
 
     public function enterStart(Context\StartContext $ctx):void
@@ -47,6 +49,7 @@ class Listener extends atexBaseListener
         $this->in_math_display = [];
         $this->in_math_inline = [];
         $this->in_env = [];
+        $this->escaped_char = [];
     }
     public function exitStart(Context\StartContext $ctx):void
     {
@@ -55,6 +58,13 @@ class Listener extends atexBaseListener
         else if($ctx->math_inline() != null ) $this->out .= array_pop($this->math_inline);
         else if($ctx->math_display() != null ) $this->out.= array_pop($this->math_display);
         else if($ctx->multi_plain_text() != null) $this->out .= array_pop($this->multi_plain_text);
+        else if($ctx->escaped_char() != null) $this->out .= array_pop($this->escaped_char);
+    }
+
+    public function exitEscaped_char(Context\Escaped_charContext $ctx):void
+    {
+        if($ctx->getText() == '\\backslash') array_push($this->escaped_char, '\\');
+        else array_push($this->escaped_char, ltrim($ctx->getText(), '\\'));
     }
 
     public function exitMulti_plain_text(Context\Multi_plain_textContext $ctx):void
@@ -219,18 +229,10 @@ class Listener extends atexBaseListener
 
     public function exitOption_arg(Context\Option_argContext $ctx):void
     {
-        if($ctx->command() != null)
-        {
-            array_push($this->option_arg, array_pop($this->command));
-        }
-        else if($ctx->math_inline() != null)
-        {
-            array_push($this->option_arg, array_pop($this->math_inline));
-        }
-        else
-        {
-            array_push($this->option_arg, $ctx->getText());
-        }
+        if($ctx->command() != null) array_push($this->option_arg, array_pop($this->command));
+        else if($ctx->math_inline() != null) array_push($this->option_arg, array_pop($this->math_inline));
+        else if($ctx->escaped_char() != null) array_push($this->option_arg, array_pop($this->escaped_char));
+        else array_push($this->option_arg, $ctx->getText());
     }
 
     public function exitOption_args(Context\Option_argsContext $ctx):void
@@ -253,18 +255,10 @@ class Listener extends atexBaseListener
 
     public function exitNecessary_arg(Context\Necessary_argContext $ctx):void
     {
-        if($ctx->command() != null)
-        {
-            array_push($this->necessary_arg, array_pop($this->command));
-        }
-        else if($ctx->math_inline() != null)
-        {
-            array_push($this->necessary_arg, array_pop($this->math_inline));
-        }
-        else
-        {
-            array_push($this->necessary_arg, $ctx->getText());
-        }
+        if($ctx->command() != null) array_push($this->necessary_arg, array_pop($this->command));
+        else if($ctx->math_inline() != null) array_push($this->necessary_arg, array_pop($this->math_inline));
+        else if($ctx->escaped_char() != null) array_push($this->necessary_arg, array_pop($this->escaped_char));
+        else array_push($this->necessary_arg, $ctx->getText());
     }
 
     public function exitNecessary_args(Context\Necessary_argsContext $ctx):void
@@ -326,14 +320,9 @@ class Listener extends atexBaseListener
 
     public function exitIn_math_inline(Context\In_math_inlineContext $ctx):void
     {
-        if($ctx->command() != null)
-        {
-            array_push($this->in_math_inline, array_pop($this->command));
-        }
-        else
-        {
-            array_push($this->in_math_inline, $ctx->getText());
-        }
+        if($ctx->command() != null) array_push($this->in_math_inline, array_pop($this->command));
+        else if($ctx->escaped_char() != null) array_push($this->in_math_inline, array_pop($this->escaped_char));
+        else array_push($this->in_math_inline, $ctx->getText());
     }
 
     public function exitMath_inline(Context\Math_inlineContext $ctx):void
@@ -350,22 +339,11 @@ class Listener extends atexBaseListener
 
     public function exitIn_math_display(Context\In_math_displayContext $ctx):void
     {
-        if($ctx->multi_plain_text() != null)
-        {
-            array_push($this->in_math_display, array_pop($this->multi_plain_text));
-        }
-        else if($ctx->command() != null)
-        {
-            array_push($this->in_math_display, array_pop($this->command));
-        }
-        else if($ctx->environment() != null)
-        {
-            array_push($this->in_math_display, array_pop($this->environment));
-        }
-        else
-        {
-            array_push($this->in_math_display, $ctx->getText());
-        }
+        if($ctx->multi_plain_text() != null) array_push($this->in_math_display, array_pop($this->multi_plain_text));
+        else if($ctx->command() != null) array_push($this->in_math_display, array_pop($this->command));
+        else if($ctx->escaped_char() != null) array_push($this->in_math_display, array_pop($this->escaped_char));
+        else if($ctx->environment() != null) array_push($this->in_math_display, array_pop($this->environment));
+        else array_push($this->in_math_display, $ctx->getText());
     }
 
     public function exitMath_display(Context\Math_displayContext $ctx):void
@@ -387,6 +365,7 @@ class Listener extends atexBaseListener
         else if($ctx->math_inline() != null) array_push($this->in_env, array_pop($this->math_inline));
         else if($ctx->math_display() != null) array_push($this->in_env, array_pop($this->math_display));
         else if($ctx->multi_plain_text() != null) array_push($this->in_env, array_pop($this->multi_plain_text));
+        else if($ctx->escaped_char() != null) array_push($this->in_env, array_pop($this->escaped_char));
         else if($ctx->in_math_display() != null) array_push($this->in_env, array_pop($this->in_math_display));
     }
 
