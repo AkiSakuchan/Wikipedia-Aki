@@ -21,7 +21,7 @@ math_display : '$$' in_math_display+ '$$';
 in_math_inline: PLAIN_TEXT | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2 | command | escaped_char;
 in_math_display: multi_plain_text | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2 | command | escaped_char | environment;
 
-escaped_char: '\\{' | '\\}' | '\\^' | '\\_' | '\\&' | '\\#' | '\\%';
+escaped_char: '\\{' | '\\}' | '\\^' | '\\_' | '\\&' | '\\#' | '\\%' | '\\$';
 
 COMMENT : '%' ~[\r\n]* -> skip ;
 
