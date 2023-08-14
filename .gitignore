@@ -1,13 +1,6 @@
 .DS_Store
 .vscode
-includes/atex2wiki/.antlr
-includes/atex2wiki/vendor
-includes/atex2wiki/atex.interp
-includes/atex2wiki/atex.tokens
-includes/atex2wiki/atexBaseListener.php
-includes/atex2wiki/atexLexer.interp
-includes/atex2wiki/atexLexer.php
-includes/atex2wiki/atexLexer.tokens
-includes/atex2wiki/atexListener.php
-includes/atex2wiki/atexParser.php
+includes/atex2wiki/
+includes/.antlr/
+vendor/
 release/
