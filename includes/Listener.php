@@ -34,9 +34,12 @@ class Listener extends atexBaseListener
 
     protected array $id;
 
+    protected bool $isInMath;
+
     public function enterStart(Context\StartContext $ctx):void
     {
         $this->errorOccurred = false;
+        $this->isInMath = false;
 
         $this->command = [];
         $this->environment = [];
@@ -65,7 +68,10 @@ class Listener extends atexBaseListener
 
     public function exitEscaped_char(Context\Escaped_charContext $ctx):void
     {
-        array_push($this->escaped_char, ltrim($ctx->getText(), '\\'));
+        // 如果在数学模式里, 则不进行转义, 由KaTex去处理
+        $str = $ctx->getText();
+        if($this->isInMath && ($str == '\{' || $str == '\}')) array_push($this->escaped_char, $str);
+        else array_push($this->escaped_char, ltrim($str, '\\'));
     }
 
     public function exitMulti_plain_text(Context\Multi_plain_textContext $ctx):void
@@ -294,6 +300,11 @@ class Listener extends atexBaseListener
         else return $ret;
     }
 
+    public function enterMath_inline(Context\Math_inlineContext $ctx):void
+    {
+        $this->isInMath = true;
+    }
+
     public function exitIn_math_inline(Context\In_math_inlineContext $ctx):void
     {
         if($ctx->command() != null) array_push($this->in_math_inline, array_pop($this->command));
@@ -310,6 +321,7 @@ class Listener extends atexBaseListener
         }
 
         array_push($this->math_inline, '<yamath display="false">' . $content . '</yamath>');
+        $this->isInMath = false;
     }
 
     public function exitIn_math_display(Context\In_math_displayContext $ctx):void
@@ -321,6 +333,11 @@ class Listener extends atexBaseListener
         else array_push($this->in_math_display, $ctx->getText());
     }
 
+    public function enterMath_display(Context\Math_displayContext $ctx):void
+    {
+        $this->isInMath = true;
+    }
+
     public function exitMath_display(Context\Math_displayContext $ctx):void
     {
         $content = '';
@@ -330,6 +347,7 @@ class Listener extends atexBaseListener
         }
 
         array_push($this->math_display, '<yamath display="true">' . $content . '</yamath>');
+        $this->isInMath = false;
     }
 
     public function exitIn_env(Context\In_envContext $ctx):void
@@ -341,6 +359,11 @@ class Listener extends atexBaseListener
         else if($ctx->multi_plain_text() != null) array_push($this->in_env, array_pop($this->multi_plain_text));
         else if($ctx->escaped_char() != null) array_push($this->in_env, array_pop($this->escaped_char));
         else if($ctx->in_math_display() != null) array_push($this->in_env, array_pop($this->in_math_display));
+    }
+
+    public function enterEnvironment(Context\EnvironmentContext $ctx):void
+    {
+        array_push($this->id, null);
     }
 
     public function exitEnvironment(Context\EnvironmentContext $ctx):void
@@ -382,12 +405,13 @@ class Listener extends atexBaseListener
         {
             $content = array_pop($this->in_env) . $content;
         }
+        $content = "\n" . trim($content) . "\n"; // 清除环境内容前后的空格和空行
         
         if(array_key_exists($name, $this->newenvironments))
         {
             $define = $this->newenvironments[$name];
             $option_args = $this->checkArgsNumber($name, $ctx, $define, $option_args, count($necessary_args));
-            $out = ($define->content)($option_args, $necessary_args, $content, $ctx);
+            $out = ($define->content)($option_args, $necessary_args, array_pop($this->id), $content, $ctx);
         }
         else
         {
@@ -401,68 +425,9 @@ class Listener extends atexBaseListener
                 $out .= '{' . $arg . '}';
             }
             $out .= $content . '\end{' . $name . '}';
+            array_pop($this->id);
         }
 
         array_push($this->environment, $out);
-    }
-
-    private function commonEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
-    {
-        // 识别定理环境
-        if(preg_match('/^(theorem)|(lemma)|(proposition)|(corollary)|(definition)|(example)|(remark)$/', $name))
-        {
-            if(count($necessary_args) > 0)
-            {
-                $this->errorOccurred = true;
-                throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
-            }
-
-            $out = "<$name";
-
-            if(($id = array_pop($this->id)) != '')
-            {
-                $out .=  ' id="' . $id . '"';
-                $content = "\n" . trim($content) . "\n";
-            }
-
-            if($option_args !== null)
-            {
-                $out .= ' name="' . $option_args . '"';
-            }
-            $out .= '>';
-
-            $out .= $content;
-            $out .= "</$name>";
-            return $out;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    private function mathEnvironment($ctx, string $name, string $content, string|null $option_args, array $necessary_args):string|false
-    {
-        // 数学和交换图环境
-        if(!preg_match('/^(tikzcd)|(equation)$/', $name)) return false;
-
-        if($name == 'tikzcd') $tag = 'tikzcd';
-        else $tag = 'math';
-
-        if($option_args !== null || count($necessary_args) > 0)
-        {
-            $this->errorOccurred = true;
-            throw new RecognitionException(null, null, $ctx, "环境 $name 的参数太多");
-        }
-
-        $out = "<$tag";
-        if(($id = array_pop($this->id)) != '')
-        {
-            $out .=  ' id="' . $id . '"';
-            $content = "\n" . trim($content) . "\n";
-        }
-        $out .= '>';
-        $out .= $content . "</$tag>";
-        return $out;
     }
 }
