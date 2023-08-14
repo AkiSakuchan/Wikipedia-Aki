@@ -1,13 +1,14 @@
 <?php
-require_once 'Listener.php';
+require_once 'Visitor.php';
 require_once 'newCommand.php';
+require_once 'newEnvironment.php';
 require_once '../vendor/autoload.php';
 require_once 'ErrorListener.php';
 
 use Antlr\Antlr4\Runtime\InputStream;
 use Antlr\Antlr4\Runtime\CommonTokenStream;
 
-class praticeListener extends Listener
+class praticeVisitor extends Visitor
 {
     private function labelCommand(string|null $option_arg, array $arg, Context\CommandContext $ctx):string
     {
@@ -18,7 +19,7 @@ class praticeListener extends Listener
     private function refCommand(string|null $option_arg, array $necessary_args, Context\CommandContext $ctx):string
     {
         $ret = '<cref ';
-        if($option_arg !== null) $ret .= 'page="' . $option_arg . '" ';
+        if($option_arg != null) $ret .= 'page="' . $option_arg . '" ';
         $ret .= 'id="' . $necessary_args[0] . '" />';
         return $ret;
     }
@@ -51,7 +52,7 @@ class praticeListener extends Listener
             $content = "\n" . trim($content) . "\n";
         }
 
-        if($option_arg != '')
+        if($option_arg != null)
         {
             $out .= ' name="' . $option_arg . '"';
         }
@@ -80,13 +81,13 @@ function Translator(string $text, string $preText = ''):array
     $lexer = new atexLexer($input);
     $tokens = new CommonTokenStream($lexer);
     $parser = new atexParser($tokens);
-    $listener = new praticeListener();
-    $parser->addParseListener($listener);
+ 
     $errorListener = new ErrorListener();
     $parser->addErrorListener($errorListener);
-    $parser->begin();
 
-    $output = $listener->out;
+    $visitor = new praticeVisitor();
+
+    $output = $visitor->visit($parser->begin());
 
     if($parser->getNumberOfSyntaxErrors() > 0)
     {
@@ -99,7 +100,29 @@ function Translator(string $text, string $preText = ''):array
 }
 
 $text = '\begin{theorem}
-\{ \}
+\begin{equation} 
+\label{adc}
+\begin{pmatrix}
+a & b \\\\
+c & d
+\end{pmatrix}
+\end{equation}
+\ref{adc}
+$$
+\begin{aligned}
+E &= mc^2 \\\\
+F &= \frac{dp}{dt}
+\end{\aligned}
+$$
 \end{theorem}';
-Translator($text);
-var_dump(Translator($text));
+
+$text2 = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}}
+\begin{theorem}
+\label{adc}
+\ref{adc}
+\R[d]{df}
+\end{theorem}
+\fra';
+
+//Translator($text2);
+var_dump(Translator($text2));
