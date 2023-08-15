@@ -1,7 +1,5 @@
 <?php
 require_once 'Visitor.php';
-require_once 'newCommand.php';
-require_once 'newEnvironment.php';
 require_once '../vendor/autoload.php';
 require_once 'ErrorListener.php';
 
@@ -10,13 +8,13 @@ use Antlr\Antlr4\Runtime\CommonTokenStream;
 
 class praticeVisitor extends Visitor
 {
-    private function labelCommand(string|null $option_arg, array $arg, Context\CommandContext $ctx):string
+    public function labelCommand(string|null $option_arg, array $arg, Context\CommandContext $ctx):string
     {
         $this->id[array_key_last($this->id)] = $arg[0];
         return '';
     }
 
-    private function refCommand(string|null $option_arg, array $necessary_args, Context\CommandContext $ctx):string
+    public function refCommand(string|null $option_arg, array $necessary_args, Context\CommandContext $ctx):string
     {
         $ret = '<cref ';
         if($option_arg != null) $ret .= 'page="' . $option_arg . '" ';
@@ -24,12 +22,12 @@ class praticeVisitor extends Visitor
         return $ret;
     }
 
-    private function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
     {
         return "<proofc>$content</proofc>";
     }
 
-    private function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
     {
         $out = '<math';
         if($id !== null)
@@ -41,7 +39,7 @@ class praticeVisitor extends Visitor
         return $out;
     }
 
-    private function commonEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function commonEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
     {
         $name = $ctx->PLAIN_TEXT(0)->getText();
         $out = "<$name";
@@ -65,11 +63,11 @@ class praticeVisitor extends Visitor
 
     public function __construct()
     {
-        $this->newcommands['\label'] = new newCommand($this->labelCommand(...), 1, null);
-        $this->newcommands['\ref'] = new newCommand($this->refCommand(...), 2, '');
-        $this->newenvironments['proofc'] = new newEnvironment($this->proofcEnvironment(...), 0, null);
-        $this->newenvironments['equation'] = new newEnvironment($this->equationEnvironment(...), 1, '');
-        $this->newenvironments['theorem'] = new newEnvironment($this->commonEnvironment(...), 1, '');
+        $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
+        $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
+        $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 0, null];
+        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 1, ''];
+        $this->newenvironments['theorem'] = [[$this, 'commonEnvironment'], 1, ''];
     }
 }
 
@@ -106,13 +104,18 @@ $text = '\begin{theorem}
 a & b \\\\
 c & d
 \end{pmatrix}
+=
+\begin{pmatrix}
+a & b \\\\
+c & d
+\end{pmatrix}
 \end{equation}
 \ref{adc}
 $$
 \begin{aligned}
 E &= mc^2 \\\\
 F &= \frac{dp}{dt}
-\end{\aligned}
+\end{aligned}
 $$
 \end{theorem}';
 
@@ -123,6 +126,6 @@ $text2 = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}}
 \R[d]{df}
 \end{theorem}
 \fra';
-
+//ini_set('memory_limit', '512M');
 //Translator($text2);
-var_dump(Translator($text2));
+var_dump(Translator($text));

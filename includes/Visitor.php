@@ -1,7 +1,5 @@
 <?php
 require_once '../vendor/autoload.php';
-require_once 'newCommand.php';
-require_once 'newEnvironment.php';
 
 use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
 
@@ -112,7 +110,7 @@ class Visitor extends atexBaseVisitor
         if(array_key_exists($name, $this->newcommands))
         {
             $define = $this->newcommands[$name];
-            $content = $define->content;
+            $content = $define[0];
             $option_args = $this->checkArgsNumber($name, $ctx, $define, $option_args, count($necessary_args));
 
             if(is_string($content))
@@ -143,7 +141,7 @@ class Visitor extends atexBaseVisitor
             }
             else
             {
-                // 如果命令体是一个函数, 就调用它来处理
+                // 如果命令体是一个可调用数组, 就调用它来处理
                 $out = $content($option_args, $necessary_args, $ctx);
             }
         }
@@ -162,11 +160,11 @@ class Visitor extends atexBaseVisitor
 
     private function checkArgsNumber(string $name, 
                                     Antlr\Antlr4\Runtime\ParserRuleContext $ctx, 
-                                    newCommand|newEnvironment $define, 
+                                    array $define, 
                                     string|null $option_arg, 
                                     int $number):string|null
     {
-        if($define->default_arg === null)
+        if($define[2] === null)
         {
             if($option_arg !== null)
             {
@@ -189,16 +187,16 @@ class Visitor extends atexBaseVisitor
             }
             else
             {
-                $real_option_arg = $define->default_arg;
+                $real_option_arg = $define[2];
             }
         }
 
-        if($real_number > $define->args_number)
+        if($real_number > $define[1])
         {
             $this->errorOccurred = true;
             throw new RecognitionException(null, null, $ctx,"$name 命令参数太多");
         }
-        else if($real_number < $define->args_number)
+        else if($real_number < $define[1])
         {
             $this->errorOccurred = true;
             throw new RecognitionException(null, null, $ctx,"$name 命令参数太少");
@@ -232,7 +230,7 @@ class Visitor extends atexBaseVisitor
         
         $content = $this->visit($ctx->necessary_args());
         
-        $this->newcommands[$name] = new newCommand($content, $number, $default_arg);
+        $this->newcommands[$name] = [$content, $number, $default_arg];
         return '';
     }
 
@@ -240,11 +238,19 @@ class Visitor extends atexBaseVisitor
     {
         if($this->errorOccurred) throw new RecognitionException(null, null, $ctx,"有异常未解决");
 
+        if($ctx->PLAIN_TEXT(0) == null | $ctx->PLAIN_TEXT(1) == null)
+        {
+            $this->errorOccurred = true;
+            throw new RecognitionException(null, null, $ctx, "环境名不对");
+        }
+
         if($ctx->PLAIN_TEXT(0)->getText() != $ctx->PLAIN_TEXT(1)->getText())
         {
             $this->errorOccurred = true;
             throw new RecognitionException(null, null, $ctx, "环境的前后名字不相同");
         }
+
+        array_push($this->id, null);
 
         $name = $ctx->PLAIN_TEXT(0)->getText();
 
@@ -282,7 +288,7 @@ class Visitor extends atexBaseVisitor
         {
             $define = $this->newenvironments[$name];
             $option_args = $this->checkArgsNumber($name, $ctx, $define, $option_args, count($necessary_args));
-            $out = ($define->content)($option_args, $necessary_args, array_pop($this->id), $content, $ctx);
+            $out = $define[0]($option_args, $necessary_args, array_pop($this->id), $content, $ctx);
         }
         else
         {
@@ -319,7 +325,7 @@ class Visitor extends atexBaseVisitor
         else if($ctx->math_display() != null) $ret = $this->visit($ctx->math_display());
         else if($ctx->multi_plain_text() != null) $ret = $this->visit($ctx->multi_plain_text());
         else if($ctx->escaped_char() != null) $ret = $this->visit($ctx->escaped_char());
-        else if($ctx->in_math_display() != null) $ret = $this->visit($ctx->in_math_display());
+        else $ret = $ctx->getText();
 
         return $ret;
     }

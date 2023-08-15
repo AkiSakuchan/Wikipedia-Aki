@@ -13,7 +13,7 @@ option_arg : PLAIN_TEXT | SYMBOL_ARGS | command | math_inline | escaped_char;
 newcommand : NEWCOMMAND BRACE1 COMMAND BRACE2 (BRACKET1 option_args BRACKET2)* BRACE1 necessary_args BRACE2;
 
 environment : BEGIN BRACE1 PLAIN_TEXT BRACE2 (BRACKET1 option_args BRACKET2)* (BRACE1 necessary_args BRACE2)* in_env+ END BRACE1 PLAIN_TEXT BRACE2;
-in_env: command | environment | math_inline | math_display | multi_plain_text | in_math_display | escaped_char;
+in_env: command | environment | math_inline | math_display | multi_plain_text | escaped_char | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2;
 
 math_inline : DOLLAR in_math_inline+ DOLLAR;
 math_display : DOLLAR DOLLAR in_math_display+ DOLLAR DOLLAR;
@@ -39,7 +39,7 @@ SYMBOL_MATH : [^_&] | '\\''\\';
 SYMBOL_ARGS : '#' DIGIT;
 SYMBOL_VERTICAL : [\n\r];
 
-fragment LETTERS : LETTER+;
+LETTERS : LETTER+;
 DIGIT : [0-9];
 
 NEWCOMMAND : '\\newcommand';
