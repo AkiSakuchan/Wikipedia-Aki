@@ -5,6 +5,7 @@ require_once 'ErrorListener.php';
 
 use Antlr\Antlr4\Runtime\InputStream;
 use Antlr\Antlr4\Runtime\CommonTokenStream;
+use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
 
 class praticeVisitor extends Visitor
 {
@@ -36,6 +37,7 @@ class praticeVisitor extends Visitor
         }
         $out .= '>';
         $out .= $content . '</math>';
+        $this->isInMath = false;
         return $out;
     }
 
@@ -66,8 +68,14 @@ class praticeVisitor extends Visitor
         $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
         $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 0, null];
-        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 1, ''];
+        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math' => true];
         $this->newenvironments['theorem'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['proposition'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['lemma'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['corollary'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['definition'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['remark'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['example'] = [[$this, 'commonEnvironment'], 1, ''];
     }
 }
 
@@ -85,11 +93,18 @@ function Translator(string $text, string $preText = ''):array
 
     $visitor = new praticeVisitor();
 
-    $output = $visitor->visit($parser->begin());
+    try
+    {
+        $output = $visitor->visit($parser->begin());
+    }
+    catch(RecognitionException $err)
+    {
+        return [false, [$err->getLine(), $err->getCtx()->getText(), $err->getMessage()]];
+    }
 
     if($parser->getNumberOfSyntaxErrors() > 0)
     {
-        return [false, $output, $errorListener->errorOut];
+        return [false, $errorListener->errorOut];
     }
     else
     {
@@ -120,12 +135,14 @@ $$
 \end{theorem}';
 
 $text2 = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}}
+
 \begin{theorem}
 \label{adc}
 \ref{adc}
 \R[d]{df}
-\end{theorem}
+\end{theore}
 \fra';
-//ini_set('memory_limit', '512M');
-//Translator($text2);
-var_dump(Translator($text));
+
+$text3 = '\new';
+
+var_dump(Translator($text2));

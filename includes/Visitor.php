@@ -5,8 +5,10 @@ use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
 
 class Visitor extends atexBaseVisitor
 {
-    private bool $errorOccurred;
-    private bool $isInMath;
+    protected bool $errorOccurred;
+    protected bool $isInMath;
+
+    protected bool $isInNewcommand;
 
     protected array $newcommands;
     protected array $newenvironments;
@@ -15,6 +17,8 @@ class Visitor extends atexBaseVisitor
     public function visitBegin(Context\BeginContext $ctx):string
     {
         $this->errorOccurred = false;
+        $this->isInMath = false;
+        $this->isInNewcommand = false;
 
         $start = $ctx->start();
         $ret = '';
@@ -101,10 +105,7 @@ class Visitor extends atexBaseVisitor
         $necessary_args = [];
         if($ctx->necessary_args() != null)
         {
-            foreach($ctx->necessary_args() as $item)
-            {
-                array_push($necessary_args, $this->visit($item));
-            }
+            $necessary_args = array_map($this->visit(...), $ctx->necessary_args());
         }
 
         if(array_key_exists($name, $this->newcommands))
@@ -208,6 +209,7 @@ class Visitor extends atexBaseVisitor
     public function visitNewcommand(Context\NewcommandContext $ctx):string
     {
         if($this->errorOccurred) throw new RecognitionException(null, null, $ctx,"有异常未解决");
+        $this->isInNewcommand = true;
 
         $name = $ctx->COMMAND()->getText();
         $option_args = $ctx->option_args();
@@ -229,6 +231,7 @@ class Visitor extends atexBaseVisitor
         }
         
         $content = $this->visit($ctx->necessary_args());
+        $this->isInNewcommand = false;
         
         $this->newcommands[$name] = [$content, $number, $default_arg];
         return '';
@@ -270,13 +273,13 @@ class Visitor extends atexBaseVisitor
         $necessary_args = [];
         if($ctx->necessary_args() != null)
         {
-            foreach($ctx->necessary_args() as $item)
-            {
-                array_push($necessary_args, $this->visit($item));
-            }
-            //array_map(array_push($necessary_args, $this->visit(...)), $ctx->necessary_args());
+            $necessary_args = array_map($this->visit(...), $ctx->necessary_args());
         }
 
+        if(array_key_exists($name, $this->newenvironments) && $this->newenvironments[$name]['math'] == true)
+        {
+            $this->isInMath = true;
+        }
         $content = '';
         foreach($ctx->in_env() as $item)
         {
