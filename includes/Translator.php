@@ -1,21 +1,22 @@
 <?php
 require_once 'Visitor.php';
-require_once '../vendor/autoload.php';
 require_once 'ErrorListener.php';
 
 use Antlr\Antlr4\Runtime\InputStream;
 use Antlr\Antlr4\Runtime\CommonTokenStream;
 use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
+use Context\CommandContext;
+use Context\EnvironmentContext;
 
 class praticeVisitor extends Visitor
 {
-    public function labelCommand(string|null $option_arg, array $arg, Context\CommandContext $ctx):string
+    public function labelCommand(string|null $option_arg, array $arg, CommandContext $ctx):string
     {
         $this->id[array_key_last($this->id)] = $arg[0];
         return '';
     }
 
-    public function refCommand(string|null $option_arg, array $necessary_args, Context\CommandContext $ctx):string
+    public function refCommand(string|null $option_arg, array $necessary_args, CommandContext $ctx):string
     {
         $ret = '<cref ';
         if($option_arg != null) $ret .= 'page="' . $option_arg . '" ';
@@ -23,12 +24,12 @@ class praticeVisitor extends Visitor
         return $ret;
     }
 
-    public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
         return "<proofc>$content</proofc>";
     }
 
-    public function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
         $out = '<math';
         if($id !== null)
@@ -41,7 +42,7 @@ class praticeVisitor extends Visitor
         return $out;
     }
 
-    public function commonEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, Context\EnvironmentContext $ctx):string
+    public function commonEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
         $name = $ctx->PLAIN_TEXT(0)->getText();
         $out = "<$name";
@@ -99,7 +100,7 @@ function Translator(string $text, string $preText = ''):array
     }
     catch(RecognitionException $err)
     {
-        return [false, [$err->getLine(), $err->getCtx()->getText(), $err->getMessage()]];
+        return [false, [[$err->getLine() , $err->getCtx()->getText() , $err->getMessage()]]];
     }
 
     if($parser->getNumberOfSyntaxErrors() > 0)
@@ -112,37 +113,6 @@ function Translator(string $text, string $preText = ''):array
     }
 }
 
-$text = '\begin{theorem}
-\begin{equation} 
-\label{adc}
-\begin{pmatrix}
-a & b \\\\
-c & d
-\end{pmatrix}
-=
-\begin{pmatrix}
-a & b \\\\
-c & d
-\end{pmatrix}
-\end{equation}
-\ref{adc}
-$$
-\begin{aligned}
-E &= mc^2 \\\\
-F &= \frac{dp}{dt}
-\end{aligned}
-$$
-\end{theorem}';
+$text = '\ref{ad}';
 
-$text2 = '\newcommand{\R}[2][C]{\mathbb{#1}\mathscr{#2}}
-
-\begin{theorem}
-\label{adc}
-\ref{adc}
-\R[d]{df}
-\end{theore}
-\fra';
-
-$text3 = '\new';
-
-var_dump(Translator($text2));
+var_dump(Translator($text));

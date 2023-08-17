@@ -1,5 +1,5 @@
 <?php
-require_once 'atex2wiki/Translator.php';
+require_once 'Translator.php';
 
 use MediaWiki\MediaWikiServices;
 
@@ -10,11 +10,7 @@ class tagHooks
     private static $socketPath = '/tmp/php-js.sock';    // Unix域套接字路径, 未来会添加设置项.
 
     // 预定义的 TeX 命令, 未来会添加设置页面
-    private static $preText = '\newcommand{\R}{\mathbb{R}}
-    \newcommand{\Cpx}{\mathbb{C}}
-    \newcommand{\Z}{\mathbb{Z}}
-    \newcommand{\H}{\mathbb{H}}
-    \newcommand{\Hom}{\operatorname{Hom}}
+    private static $preText = '\newcommand{\Hom}{\operatorname{Hom}}
     \newcommand{\GL}{\operatorname{GL}}
     \newcommand{\SL}{\operatorname{SL}}
     \newcommand{\O}{\operatorname{O}}
@@ -86,18 +82,21 @@ class tagHooks
 
         if($isReplaceSharp)
         {
-            $parsingOutput = Translator($text, self::$preText);
-            if($parsingOutput[0]) $text = $parsingOutput[1];
+            $parsingOutput = Aki\Translator($text, self::$preText);
+            if($parsingOutput[0])
+            {
+                $text = $parsingOutput[1];
+            }
             else
             {
                 $preLine = substr_count(self::$preText, "\n");
                 $errStr = "\n";
-                foreach($parsingOutput[2] as $errOut)
+                foreach($parsingOutput[1] as $errOut)
                 {
-                    $realLine = $errOut->line - $preLine;
-                    $errStr .= "第 $realLine 行 " . $errOut->$charPosInLine . " 处有错误: " . $errOut->msg . "\n";
+                    $realLine = $errOut[0] - $preLine;
+                    $errStr .= "第 $realLine 行 " . $errOut[1] . " 处有错误: " . $errOut[2] . "\n";
                 }
-                $text = $parsingOutput[1] . $errStr;
+                $text = $errStr;
             }
         }
         else

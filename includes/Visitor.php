@@ -2,6 +2,23 @@
 require_once '../vendor/autoload.php';
 
 use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
+use Antlr\Antlr4\Runtime\ParserRuleContext;
+use Context\BeginContext;
+use Context\StartContext;
+use Context\Multi_plain_textContext;
+use Context\Option_argContext;
+use Context\Option_argsContext;
+use Context\Necessary_argContext;
+use Context\Necessary_argsContext;
+use Context\CommandContext;
+use Context\NewcommandContext;
+use Context\Math_displayContext;
+use Context\Math_inlineContext;
+use Context\In_math_displayContext;
+use Context\In_math_inlineContext;
+use Context\EnvironmentContext;
+use Context\In_envContext;
+use Context\Escaped_charContext;
 
 class Visitor extends atexBaseVisitor
 {
@@ -14,7 +31,7 @@ class Visitor extends atexBaseVisitor
     protected array $newenvironments;
 
     protected array $id = [];
-    public function visitBegin(Context\BeginContext $ctx):string
+    public function visitBegin(BeginContext $ctx):string
     {
         $this->errorOccurred = false;
         $this->isInMath = false;
@@ -29,7 +46,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitStart(Context\StartContext $ctx):string
+    public function visitStart(StartContext $ctx):string
     {
         if($ctx->command() != null ) $ret = $this->visit($ctx->command());
         else if($ctx->environment() != null ) $ret = $this->visit($ctx->environment());
@@ -42,12 +59,12 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitMulti_plain_text(Context\Multi_plain_textContext $ctx):string
+    public function visitMulti_plain_text(Multi_plain_textContext $ctx):string
     {
         return $ctx->getText();
     }
 
-    public function visitOption_arg(Context\Option_argContext $ctx):string
+    public function visitOption_arg(Option_argContext $ctx):string
     {
         if($ctx->command() != null) $ret = $this->visit($ctx->command());
         else if($ctx->math_inline() != null) $ret = $this->visit($ctx->math_inline());
@@ -57,7 +74,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitOption_args(Context\Option_argsContext $ctx):string
+    public function visitOption_args(Option_argsContext $ctx):string
     {
         $option_args = $ctx->option_arg();
         $ret = '';
@@ -68,7 +85,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitNecessary_arg(Context\Necessary_argContext $ctx):string
+    public function visitNecessary_arg(Necessary_argContext $ctx):string
     {
         if($ctx->command() != null) $ret = $this->visit($ctx->command());
         else if($ctx->math_inline() != null) $ret = $this->visit($ctx->math_inline());
@@ -78,7 +95,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitNecessary_args(Context\Necessary_argsContext $ctx):string
+    public function visitNecessary_args(Necessary_argsContext $ctx):string
     {
         $necessary_args = $ctx->necessary_arg();
         $ret = '';
@@ -89,7 +106,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitCommand(Context\CommandContext $ctx):string
+    public function visitCommand(CommandContext $ctx):string
     {
         if($this->errorOccurred) throw new RecognitionException(null, null, $ctx,"有异常未解决");
         
@@ -160,7 +177,7 @@ class Visitor extends atexBaseVisitor
     }
 
     private function checkArgsNumber(string $name, 
-                                    Antlr\Antlr4\Runtime\ParserRuleContext $ctx, 
+                                    ParserRuleContext $ctx, 
                                     array $define, 
                                     string|null $option_arg, 
                                     int $number):string|null
@@ -206,7 +223,7 @@ class Visitor extends atexBaseVisitor
         return $real_option_arg;
     }
 
-    public function visitNewcommand(Context\NewcommandContext $ctx):string
+    public function visitNewcommand(NewcommandContext $ctx):string
     {
         if($this->errorOccurred) throw new RecognitionException(null, null, $ctx,"有异常未解决");
         $this->isInNewcommand = true;
@@ -237,7 +254,7 @@ class Visitor extends atexBaseVisitor
         return '';
     }
 
-    public function visitEnvironment(Context\EnvironmentContext $ctx):string
+    public function visitEnvironment(EnvironmentContext $ctx):string
     {
         if($this->errorOccurred) throw new RecognitionException(null, null, $ctx,"有异常未解决");
 
@@ -320,7 +337,7 @@ class Visitor extends atexBaseVisitor
         else return $ret;
     }
 
-    public function visitIn_env(Context\In_envContext $ctx):string
+    public function visitIn_env(In_envContext $ctx):string
     {
         if($ctx->command() != null) $ret = $this->visit($ctx->command());
         else if($ctx->environment() != null) $ret = $this->visit($ctx->environment());
@@ -333,7 +350,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitMath_inline(Context\Math_inlineContext $ctx):string
+    public function visitMath_inline(Math_inlineContext $ctx):string
     {
         $this->isInMath = true;
         $content = '';
@@ -346,7 +363,7 @@ class Visitor extends atexBaseVisitor
         return '<yamath display="false">' . $content . '</yamath>';
     }
 
-    public function visitMath_display(Context\Math_displayContext $ctx):string
+    public function visitMath_display(Math_displayContext $ctx):string
     {
         $this->isInMath = true;
         $content = '';
@@ -358,7 +375,7 @@ class Visitor extends atexBaseVisitor
         return '<yamath display="true">' . $content . '</yamath>';
     }
 
-    public function visitIn_math_inline(Context\In_math_inlineContext $ctx):string
+    public function visitIn_math_inline(In_math_inlineContext $ctx):string
     {
         if($ctx->command() != null) $ret = $this->visit($ctx->command());
         else if($ctx->escaped_char() != null) $ret = $this->visit($ctx->escaped_char());
@@ -367,7 +384,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitIn_math_display(Context\In_math_displayContext $ctx):string
+    public function visitIn_math_display(In_math_displayContext $ctx):string
     {
         if($ctx->multi_plain_text() != null) $ret = $this->visit($ctx->multi_plain_text());
         else if($ctx->command() != null) $ret = $this->visit($ctx->command());
@@ -378,7 +395,7 @@ class Visitor extends atexBaseVisitor
         return $ret;
     }
 
-    public function visitEscaped_char(Context\Escaped_charContext $ctx):string
+    public function visitEscaped_char(Escaped_charContext $ctx):string
     {
         $str = $ctx->getText();
         if($this->isInMath && ($str == '\{' || $str == '\}')) $ret = $str;

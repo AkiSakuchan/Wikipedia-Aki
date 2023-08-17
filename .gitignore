@@ -3,4 +3,4 @@
 includes/atex2wiki/
 includes/.antlr/
 vendor/
-release/
+build/
