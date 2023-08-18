@@ -82,7 +82,7 @@ class tagHooks
 
         if($isReplaceSharp)
         {
-            $parsingOutput = Aki\Translator($text, self::$preText);
+            $parsingOutput = Aki\Translator($text, self::$socketPath ,self::$preText);
             if($parsingOutput[0])
             {
                 $text = $parsingOutput[1];

@@ -19,11 +19,14 @@ use Context\In_math_inlineContext;
 use Context\EnvironmentContext;
 use Context\In_envContext;
 use Context\Escaped_charContext;
+use Context\LinkContext;
 
 class Visitor extends atexBaseVisitor
 {
     protected bool $errorOccurred;
     protected bool $isInMath;
+
+    protected string $socketPath;
 
     protected bool $isInNewcommand;
 
@@ -31,6 +34,12 @@ class Visitor extends atexBaseVisitor
     protected array $newenvironments;
 
     protected array $id = [];
+
+    public function __construct(string $socketPath)
+    {
+        $this->socketPath = $socketPath;
+    }
+
     public function visitBegin(BeginContext $ctx):string
     {
         $this->errorOccurred = false;
@@ -54,6 +63,7 @@ class Visitor extends atexBaseVisitor
         else if($ctx->math_display() != null ) $ret = $this->visit($ctx->math_display());
         else if($ctx->multi_plain_text() != null) $ret = $this->visit($ctx->multi_plain_text());
         else if($ctx->escaped_char() != null) $ret = $this->visit($ctx->escaped_char());
+        else if($ctx->link() != null) $ret = $this->visit($ctx->link());
         else $ret = $this->visit($ctx->newcommand());
 
         return $ret;
@@ -235,7 +245,7 @@ class Visitor extends atexBaseVisitor
 
         switch(count($option_args))
         {
-            case 0: $number =0; $default_arg = null;
+            case 0: $number =0; $default_arg = null; break;
             case 1: $number = $this->isValid($this->visit($ctx->option_args(0)));break;
             case 2: $default_arg = $this->visit($ctx->option_args(1)); $number = $this->isValid($this->visit($ctx->option_args(0)));break;
             default: $this->errorOccurred = true; throw new RecognitionException(null, null, $ctx, "定义命令 $name 时参数太多");
@@ -293,7 +303,7 @@ class Visitor extends atexBaseVisitor
             $necessary_args = array_map($this->visit(...), $ctx->necessary_args());
         }
 
-        if(array_key_exists($name, $this->newenvironments) && $this->newenvironments[$name]['math'] == true)
+        if(array_key_exists($name, $this->newenvironments) && array_key_exists('math', $this->newenvironments[$name]))
         {
             $this->isInMath = true;
         }
@@ -360,7 +370,7 @@ class Visitor extends atexBaseVisitor
         }
 
         $this->isInMath = false;
-        return '<yamath display="false">' . $content . '</yamath>';
+        return $this->katexParser($content, false);
     }
 
     public function visitMath_display(Math_displayContext $ctx):string
@@ -372,7 +382,7 @@ class Visitor extends atexBaseVisitor
             $content .= $this->visit($item);
         }
         $this->isInMath = false;
-        return '<yamath display="true">' . $content . '</yamath>';
+        return $this->katexParser($content, true);
     }
 
     public function visitIn_math_inline(In_math_inlineContext $ctx):string
@@ -397,10 +407,57 @@ class Visitor extends atexBaseVisitor
 
     public function visitEscaped_char(Escaped_charContext $ctx):string
     {
+        // 处理转义字符
         $str = $ctx->getText();
         if($this->isInMath && ($str == '\{' || $str == '\}')) $ret = $str;
         else $ret = ltrim($str, '\\');
 
         return $ret;
+    }
+
+    public function visitLink(LinkContext $ctx):string
+    {
+        if($ctx->PLAIN_TEXT() == null) return '';
+
+        $str = $ctx->PLAIN_TEXT()->getText();
+        
+        // 识别X||Y 这种形式, 把它变成 XY|X这种形式
+        $str = preg_replace_callback('/([^|]+)\|\|([^|]+)/u', fn($matches) => $matches[1] . $matches[2] .'|' . $matches[1] , $str);
+
+        return "[[$str]]";
+    }
+
+    protected function katexParser(string $source, bool $display):string
+    {
+        $socket = socket_create(AF_UNIX, SOCK_STREAM, 0);
+        if( $socket == false )
+        {
+            error_log('无法创建套接字');
+            return '';
+        }
+        if(!socket_connect($socket, $this->socketPath))
+        {
+            error_log('无法连接套接字');
+            return '';
+        }
+
+        $send = json_encode(array('display'=> $display, 'tex'=> $source));
+        if( socket_write($socket, $send) === false )
+        {
+            error_log('数据写入失败');
+            return '';
+        }
+        socket_shutdown($socket, 1); // 关闭套接字写入, 把发送end信号给服务端.
+
+        // 循环读取套接字中的信息, 避免遗漏
+        $html = '';
+        do
+        {
+            $part = socket_read($socket, 10240);
+            $html .= $part;
+        }while(strlen($part) > 0);
+
+        socket_close($socket);
+        return $html;
     }
 }

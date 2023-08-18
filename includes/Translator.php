@@ -26,7 +26,10 @@ class praticeVisitor extends Visitor
 
     public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
-        return "<proofc>$content</proofc>";
+        $ret = '<div class="mw-collapsible mw-collapsed"><span class="env-title">证明:</span><div class="mw-collapsible-content proof-content">';
+        $ret .= $content;
+        $ret .= '</div></div>';
+        return $ret;
     }
 
     public function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
@@ -64,12 +67,12 @@ class praticeVisitor extends Visitor
         return $out;
     }
 
-    public function __construct()
+    public function __construct(string $socketPath)
     {
         $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
         $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 0, null];
-        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math' => true];
+        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'];
         $this->newenvironments['theorem'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['proposition'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['lemma'] = [[$this, 'commonEnvironment'], 1, ''];
@@ -77,10 +80,12 @@ class praticeVisitor extends Visitor
         $this->newenvironments['definition'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['remark'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['example'] = [[$this, 'commonEnvironment'], 1, ''];
+
+        parent::__construct($socketPath);
     }
 }
 
-function Translator(string $text, string $preText = ''):array
+function Translator(string $text, string $socketPath, string $preText = ''):array
 {
     $source = $preText . $text;
 
@@ -92,7 +97,7 @@ function Translator(string $text, string $preText = ''):array
     $errorListener = new ErrorListener();
     $parser->addErrorListener($errorListener);
 
-    $visitor = new praticeVisitor();
+    $visitor = new praticeVisitor($socketPath);
 
     try
     {
@@ -113,6 +118,18 @@ function Translator(string $text, string $preText = ''):array
     }
 }
 
-$text = '\ref{ad}';
+$text = '\begin{proofc}
+FGRF
+\begin{theorem}
+AFCDC
+\begin{pmatrix}
+a & b \\\\
+c & d
+\begin{proofc}
+\newfr
+\end{proofc}
+\end{pmatrix}
+\end{theorem}
+\end{proofc}';
 
-var_dump(Translator($text));
+echo Translator($text, '/tmp/php-js.sock')[1];
