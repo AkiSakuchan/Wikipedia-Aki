@@ -131,9 +131,10 @@ theorem, proposition, lemma, corollary, remark, example, definition
 
 ## 编译
 若要编译本项目, 则系统中需要安装composer, antlr 4.12, php-scoper(注意要设置环境变量), PHP版本要大于8.1
-若修改了```atex.g4``` 则按如下顺序运行:
+首次编译按如下顺序运行:
 ```zsh
+composer install
 ./complie.sh
 ./make.sh
 ```
-若没有修改```atex.g4```则只用运行第二个脚本.
+之后如果修改了```atex.g4```则运行后面两个命令, 如果没有修改```atex.g4```则只用运行第三个脚本.
