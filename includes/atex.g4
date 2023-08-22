@@ -10,7 +10,7 @@ necessary_arg : PLAIN_TEXT | BRACKET1 | BRACKET2 | SYMBOL_ARGS | command | math_
 option_args : option_arg*;
 option_arg : PLAIN_TEXT | SYMBOL_ARGS | command | math_inline | escaped_char;
 
-newcommand : NEWCOMMAND BRACE1 COMMAND BRACE2 (BRACKET1 option_args BRACKET2)* BRACE1 necessary_args BRACE2 SYMBOL_VERTICAL?;
+newcommand : NEWCOMMAND BRACE1 COMMAND BRACE2 (BRACKET1 option_args BRACKET2)* BRACE1 necessary_args BRACE2;
 
 environment : BEGIN BRACE1 PLAIN_TEXT BRACE2 (BRACKET1 option_args BRACKET2)* (BRACE1 necessary_args BRACE2)* in_env+ END BRACE1 PLAIN_TEXT BRACE2;
 in_env: command | environment | math_inline | math_display | multi_plain_text | escaped_char | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2;
@@ -29,7 +29,7 @@ COMMENT : '%' ~[\r\n]* -> skip ;
 
 PLAIN_TEXT : (HAN | LETTER | DIGIT | [ \t!"()'*+,\-./:;<=>?@`|~])+;
 
-fragment LETTER: [a-zA-Z];
+fragment LETTER: [a-zA-ZàÀâÂéÉèÈëËêÊïÏîÎôÔöÖùÙüÜûÛÿŸçÇß];
 fragment HAN : [\p{Han}];
 
 BRACKET1: '[';

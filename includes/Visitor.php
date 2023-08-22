@@ -1,5 +1,4 @@
 <?php
-require_once '../vendor/autoload.php';
 
 use Antlr\Antlr4\Runtime\Error\Exceptions\RecognitionException;
 use Antlr\Antlr4\Runtime\ParserRuleContext;
@@ -370,7 +369,7 @@ class Visitor extends atexBaseVisitor
         }
 
         $this->isInMath = false;
-        return $this->katexParser($content, false);
+        return '<noparser>' . $this->katexParser($content, false) . '</noparser>';
     }
 
     public function visitMath_display(Math_displayContext $ctx):string
@@ -382,7 +381,7 @@ class Visitor extends atexBaseVisitor
             $content .= $this->visit($item);
         }
         $this->isInMath = false;
-        return $this->katexParser($content, true);
+        return '<noparser>' . $this->katexParser($content, true) . '</noparser>';
     }
 
     public function visitIn_math_inline(In_math_inlineContext $ctx):string
