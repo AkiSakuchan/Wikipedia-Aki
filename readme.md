@@ -128,3 +128,12 @@ theorem, proposition, lemma, corollary, remark, example, definition
 表示引用页面 "局部紧空间" 中的标签为"单点紧化"的东西, 包括定理或者公式.
 
 这个标签会自动生成链接和文字, 文字会显示公式定理的编号.
+
+## 编译
+若要编译本项目, 则系统中需要安装composer, antlr 4.12, php-scoper(注意要设置环境变量), PHP版本要大于8.1
+若修改了```atex.g4``` 则按如下顺序运行:
+```zsh
+./complie.sh
+./make.sh
+```
+若没有修改```atex.g4```则只用运行第二个脚本.
