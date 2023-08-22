@@ -31,7 +31,7 @@ final class praticeVisitor extends Visitor
     {
         $id = $necessary_args[0];
         if($id == null) return '';
-        $id = urlencode($id);
+        $idUrl = urlencode($id);
 
         if($option_arg != null)
         {
@@ -43,7 +43,7 @@ final class praticeVisitor extends Visitor
                             ->from( 'cross_pages_references' )
                             ->where( [
                                 'page_title' => $page,
-                                'label' => $id
+                                'label' => $idUrl
                             ])
                             ->caller( __METHOD__ )->fetchField();
 
@@ -58,13 +58,13 @@ final class praticeVisitor extends Visitor
         }
         else
         {
-            if(array_key_exists($id, $this->idNumber))
+            if(array_key_exists($idUrl, $this->idNumber))
             {
-                $tag = $this->idNumber[$id];
+                $tag = $this->idNumber[$idUrl];
             }
             else $tag = $necessary_args[0];
 
-            $ret = "<a href=\"#$id\">$tag</a>";
+            $ret = "<a href=\"#$idUrl\">$tag</a>";
         }
 
         return "<noparser>$ret</noparser>";
@@ -80,25 +80,25 @@ final class praticeVisitor extends Visitor
 
     public function equationEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
-        $tag = ' (' . $this->rightCounter . ') ';
+        $tag = "({$this->rightCounter})";
         $out = '<div class="container"';
         if($id != null)
         {
-            $id = urlencode($id);
-            $this->idNumber[$id] = $tag;
-            $titleUrlString = urlencode($this->title);
-            $idUrlString = urlencode($id);
+            $idUrl = urlencode($id);
+            $this->idNumber[$idUrl] = $tag;
+            $titleUrl = urlencode($this->title);
+
             if( false == $this->dbw->insert('cross_pages_references',
                 [
-                    'page_title' => $titleUrlString,
-                    'label' => $idUrlString,
+                    'page_title' => $titleUrl,
+                    'label' => $idUrl,
                     'display_tag' => $tag
                 ]))
             {
                     error_log("插入($id, $tag)失败");
             }
 
-            $out .= ' id="' . $idUrlString . '"';
+            $out .= ' id="' . $idUrl . '"';
         }
         $out .= '>';
 
@@ -138,14 +138,22 @@ final class praticeVisitor extends Visitor
 
         if( $id != null )
         {
-            // 如果temp属性则添加编号.
-            $tag = $this->rightCounter;
-            $span = $dom->createElement('span', "($tag)");
-            $span->setAttribute('class', 'right-tag');
+            $tag = "({$this->rightCounter})";
+            $idUrl = urlencode($id);
+            $this->idNumber[$idUrl] = $tag;
+            $titleUrl = urlencode($this->title);
 
-            $div->appendChild($span);
+            if( false == $this->dbw->insert('cross_pages_references',
+                [
+                    'page_title' => $titleUrl,
+                    'label' => $idUrl,
+                    'display_tag' => $tag
+                ]))
+            {
+                    error_log("插入($id, $tag)失败");
+            }
 
-            $div->setAttribute('id', $id);
+            $div->setAttribute('id', $idUrl);
             $this->rightCounter++;
         }
 
@@ -184,20 +192,20 @@ final class praticeVisitor extends Visitor
 
         if($id != null)
         {
-            $this->idNumber[$id] = $tag;
-            $titleUrlString = urlencode($this->title);
-            $idUrlString = urlencode($id);
+            $titleUrl = urlencode($this->title);
+            $idUrl = urlencode($id);
+            $this->idNumber[$idUrl] = $tag;
             if( false == $this->dbw->insert('cross_pages_references',
                 [
-                    'page_title' => $titleUrlString,
-                    'label' => $idUrlString,
+                    'page_title' => $titleUrl,
+                    'label' => $idUrl,
                     'display_tag' => $tag
                 ]))
             {
                     error_log("插入($id, $tag)失败");
             }
 
-            $out .= ' id="' . $idUrlString . '"';
+            $out .= ' id="' . $idUrl . '"';
         }
         $out .= '>';
 
@@ -213,11 +221,49 @@ final class praticeVisitor extends Visitor
         return $out;
     }
 
+    public function conventionEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
+    {
+        return '<div class="convention"><span class="env-title">约定: </span>' . $content . '</div>';
+    }
+
+    public function enumerateEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
+    {
+        $first = true;
+        $contentRendered = preg_replace_callback('/\\\item/', function($matches) use(&$first) :string
+        {
+            if($first)
+            {
+                $first = false;
+                return '<li>';
+            }
+            return '</li><li>';
+        }, $content);
+        $contentRendered .= '</li>';
+        return "<ol type=\"$option_arg\">$contentRendered</ol>";
+    }
+
+    public function itemizeEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
+    {
+        $first = true;
+        $contentRendered = preg_replace_callback('/\\\item/', function($matches) use(&$first) :string
+        {
+            if($first)
+            {
+                $first = false;
+                return '<li>';
+            }
+            return '</li><li>';
+        }, $content);
+        $contentRendered .= '</li>';
+        return "<ul>$contentRendered</ul>";
+    }
+
     public function __construct(string $socketPath, string $title)
     {
         $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
         $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 0, null];
+        $this->newenvironments['convention'] = [[$this, 'conventionEnvironment'], 0, null];
         $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'];
         $this->newenvironments['tikzcd'] = [[$this, 'tikzcdEnvironment'], 1, '', 'math'];
         $this->newenvironments['theorem'] = [[$this, 'commonEnvironment'], 1, ''];
@@ -227,6 +273,8 @@ final class praticeVisitor extends Visitor
         $this->newenvironments['definition'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['remark'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['example'] = [[$this, 'commonEnvironment'], 1, ''];
+        $this->newenvironments['enumerate'] = [[$this, 'enumerateEnvironment'], 1, '1'];
+        $this->newenvironments['itemize'] = [[$this, 'itemizeEnvironment'], 0, null];
 
         parent::__construct($socketPath);
         $this->title = $title;

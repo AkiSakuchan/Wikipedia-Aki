@@ -1,6 +1,6 @@
 grammar atex;
 begin: start+;
-start : command | environment | math_inline | math_display | multi_plain_text | escaped_char | newcommand | link;
+start : command | environment | math_inline | math_display | multi_plain_text | escaped_char | newcommand | link | template;
 
 multi_plain_text : PLAIN_TEXT | SYMBOL_VERTICAL;
 
@@ -21,9 +21,10 @@ math_display : DOLLAR DOLLAR in_math_display+ DOLLAR DOLLAR;
 in_math_inline: PLAIN_TEXT | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2 | command | escaped_char;
 in_math_display: multi_plain_text | SYMBOL_MATH | BRACKET1 | BRACKET2 | BRACE1 | BRACE2 | command | escaped_char | environment;
 
-escaped_char: '\\{' | '\\}' | '\\^' | '\\_' | '\\&' | '\\#' | '\\%' | '\\$';
+escaped_char: '\\{' | '\\}' | '\\^' | '\\_' | '\\&' | '\\#' | '\\%' | '\\$' | '\\backslash';
 
 link : BRACKET1 BRACKET1 PLAIN_TEXT BRACKET2 BRACKET2;
+template : BRACE1 BRACE1 PLAIN_TEXT BRACE2 BRACE2;
 
 COMMENT : '%' ~[\r\n]* -> skip ;
 

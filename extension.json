@@ -2,7 +2,7 @@
     "name": "Wikipedia-Aki",
     "author": "Aki",
     "description": "提供交叉引用, 跨页面引用, 自动生成定理样式, 可折叠证明, 数学渲染",
-    "version": "2.0.3",
+    "version": "3.2.2",
     "license-name": "Mozilla v2.0",
     "manifest_version": 2,
     "requires":{

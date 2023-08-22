@@ -55,6 +55,11 @@ blockquote.example{
 	float: right;
 }
 
+.convention{
+	background-color: #d3e9e8;
+	border-style: dashed;
+}
+
 .mw-editsection{
 	display: none;
 }

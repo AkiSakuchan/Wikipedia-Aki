@@ -1,0 +1,18 @@
+{
+    "name": "vendor/parser",
+    "description": "Convert partial aTeX to WikiMarker",
+    "type": "library",
+    "license": "Mozilla v2.0",
+    "authors": [
+        {
+            "name": "Aki"
+        }
+    ],
+    "minimum-stability": "RC",
+    "autoload": {
+        "classmap": [
+            "./includes/atex2wiki",
+            "./vendor"
+        ]
+    }
+}

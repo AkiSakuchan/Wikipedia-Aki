@@ -19,6 +19,7 @@ use Context\EnvironmentContext;
 use Context\In_envContext;
 use Context\Escaped_charContext;
 use Context\LinkContext;
+use Context\TemplateContext;
 
 class Visitor extends atexBaseVisitor
 {
@@ -63,6 +64,7 @@ class Visitor extends atexBaseVisitor
         else if($ctx->multi_plain_text() != null) $ret = $this->visit($ctx->multi_plain_text());
         else if($ctx->escaped_char() != null) $ret = $this->visit($ctx->escaped_char());
         else if($ctx->link() != null) $ret = $this->visit($ctx->link());
+        else if($ctx->template() != null) $ret = $this->visit($ctx->template());
         else $ret = $this->visit($ctx->newcommand());
 
         return $ret;
@@ -408,7 +410,8 @@ class Visitor extends atexBaseVisitor
     {
         // 处理转义字符
         $str = $ctx->getText();
-        if($this->isInMath && ($str == '\{' || $str == '\}')) $ret = $str;
+        if($this->isInMath ) $ret = $str;
+        else if($str == '\\backslash') $ret = '\\';
         else $ret = ltrim($str, '\\');
 
         return $ret;
@@ -424,6 +427,13 @@ class Visitor extends atexBaseVisitor
         $str = preg_replace_callback('/([^|]+)\|\|([^|]+)/u', fn($matches) => $matches[1] . $matches[2] .'|' . $matches[1] , $str);
 
         return "[[$str]]";
+    }
+
+    public function visitTemplate(TemplateContext $ctx):string
+    {
+        if($ctx->PLAIN_TEXT() == null) return '';
+        $str = $ctx->PLAIN_TEXT()->getText();
+        return '{{' . $str . '}}';
     }
 
     protected function katexParser(string $source, bool $display):string
