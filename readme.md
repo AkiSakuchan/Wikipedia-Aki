@@ -129,7 +129,26 @@ theorem, proposition, lemma, corollary, remark, example, definition
 
 这个标签会自动生成链接和文字, 文字会显示公式定理的编号.
 
-## 编译
+## 添加环境等
+若要添加环境, 可以修改 ```includes/Translator.php```, 在构造函数```__construct```里面给```$this->newcommands```和```$this->newenvironments```数组添加元素. 每个元素也是一个数组, 这个数组的第一项是一个可调用数组比如```[$this, 'itemizeEnvironment']```, 代表了环境处理函数. 第二项是一个数字, 表示包括默认参数在内的参数数量. 第三项是```string|null```, 如果为```null```则表示没有设置默认参数, 否则如果是字符串(包括空串)那么就表示默认参数是这个字符串.
+
+命令的处理函数有如下格式:
+```php
+public function refCommand(string|null $option_arg, array $necessary_args, CommandContext $ctx):string
+```
+第一个参数表示实际提供的用```[]```括号起来的参数(也可能是默认参数), 比如```\ref[page]{tag}```那么```$option_arg```就是```'page'```. ```$necessary_args```是一个数组, 表示由```{}```包括的参数. ```$ctx```是antlr上下文(具体参见antlr文档). 返回值是一个字符串, 将替换源代码中的对应命令.比如```\ref[page]{tag}```会被替换为
+```html
+<a href="?index.php?title=page#tag>xxx</a>
+```
+上面字符串是```refCommand```函数生成的.
+
+环境的处理函数有如下格式
+```php
+public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
+```
+这里其他参数和命令的处理函数一样, 而```$content```是位于```\begin{环境名}```和```\end{环境名}```之间的内容, 不过是已经被解析过的文本.如果要获得未解析的原始文本, 可以通过```$ctx->getText()```来得到.
+
+# 如何编译
 若要编译本项目, 则系统中需要安装composer, antlr 4.12, php-scoper(注意要设置环境变量), PHP版本要大于8.1
 首次编译按如下顺序运行:
 ```zsh
