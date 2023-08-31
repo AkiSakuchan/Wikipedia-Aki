@@ -155,6 +155,10 @@ final class praticeVisitor extends Visitor
 
             $div->setAttribute('id', $idUrl);
             $this->rightCounter++;
+
+            $span = $dom->createElement('span', $tag);
+            $span->setAttribute('class', 'right-tag');
+            $div->appendChild($span);
         }
 
         $svg_dom = new DOMDocument();
