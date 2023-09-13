@@ -63,8 +63,6 @@ class Visitor extends atexBaseVisitor
         else if($ctx->math_display() != null ) $ret = $this->visit($ctx->math_display());
         else if($ctx->multi_plain_text() != null) $ret = $this->visit($ctx->multi_plain_text());
         else if($ctx->escaped_char() != null) $ret = $this->visit($ctx->escaped_char());
-        else if($ctx->link() != null) $ret = $this->visit($ctx->link());
-        else if($ctx->template() != null) $ret = $this->visit($ctx->template());
         else $ret = $this->visit($ctx->newcommand());
 
         return $ret;
@@ -72,7 +70,10 @@ class Visitor extends atexBaseVisitor
 
     public function visitMulti_plain_text(Multi_plain_textContext $ctx):string
     {
-        return $ctx->getText();
+        if($ctx->link() != null) $ret = $this->visit($ctx->link());
+        else if($ctx->template() != null) $ret = $this->visit($ctx->template());
+        else $ret = $ctx->getText();
+        return $ret;
     }
 
     public function visitOption_arg(Option_argContext $ctx):string

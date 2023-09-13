@@ -1,8 +1,8 @@
 grammar atex;
 begin: start+;
-start : command | environment | math_inline | math_display | multi_plain_text | escaped_char | newcommand | link | template;
+start : command | environment | math_inline | math_display | multi_plain_text | escaped_char | newcommand;
 
-multi_plain_text : PLAIN_TEXT | SYMBOL_VERTICAL;
+multi_plain_text : PLAIN_TEXT | SYMBOL_VERTICAL | link | template;
 
 command : COMMAND (BRACKET1 option_args BRACKET2)* (BRACE1 necessary_args BRACE2)*;
 necessary_args : necessary_arg*;
