@@ -72,7 +72,15 @@ final class praticeVisitor extends Visitor
 
     public function proofcEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
     {
-        $ret = '<div class="mw-collapsible mw-collapsed"><span class="env-title">证明:</span><div class="mw-collapsible-content proof-content">';
+        if($option_arg != null)
+        {
+            $title = "证明({$option_arg}):";
+        }
+        else
+        {
+            $title = "证明:";
+        }
+        $ret = '<div class="mw-collapsible mw-collapsed"><span class="env-title">' . $title . '</span><div class="mw-collapsible-content proof-content">';
         $ret .= $content;
         $ret .= '</div></div>';
         return $ret;
@@ -266,7 +274,7 @@ final class praticeVisitor extends Visitor
     {
         $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
-        $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 0, null];
+        $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 1, ''];
         $this->newenvironments['convention'] = [[$this, 'conventionEnvironment'], 0, null];
         $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'];
         $this->newenvironments['tikzcd'] = [[$this, 'tikzcdEnvironment'], 1, '', 'math'];
