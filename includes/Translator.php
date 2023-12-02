@@ -276,8 +276,8 @@ final class praticeVisitor extends Visitor
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
         $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 1, ''];
         $this->newenvironments['convention'] = [[$this, 'conventionEnvironment'], 0, null];
-        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'];
-        $this->newenvironments['tikzcd'] = [[$this, 'tikzcdEnvironment'], 1, '', 'math'];
+        $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'=> 1];
+        $this->newenvironments['tikzcd'] = [[$this, 'tikzcdEnvironment'], 1, '', 'math' => 1];
         $this->newenvironments['theorem'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['proposition'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['lemma'] = [[$this, 'commonEnvironment'], 1, ''];
