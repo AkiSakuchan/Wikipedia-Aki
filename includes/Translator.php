@@ -270,10 +270,38 @@ final class praticeVisitor extends Visitor
         return "<ul>$contentRendered</ul>";
     }
 
+    public function descriptionEnvironment(string|null $option_arg, array $necessary_args, string|null $id, string $content, EnvironmentContext $ctx):string
+    {
+        $first = true;
+        $contentRendered = preg_replace_callback('/\\\item/', function($matches) use(&$first) :string
+        {
+            if($first)
+            {
+                $first = false;
+                return '<dd>';
+            }
+            return '</dd><dd>';
+        }, $content);
+        $contentRendered .= '</dd>';
+        return "<dl>$contentRendered</dl>";
+    }
+
+    public function itemCommand(string|null $option_arg, array $arg, CommandContext $ctx):string
+    {
+        $out = '';
+        if( $option_arg != null)
+        {
+            $out = "<dt>$option_arg</dt>";
+        }
+        $out .= '\item';
+        return $out;
+    }
+
     public function __construct(string $socketPath, string $title)
     {
         $this->newcommands['\label'] = [[$this, 'labelCommand'], 1, null];
         $this->newcommands['\ref'] = [[$this, 'refCommand'], 2, ''];
+        $this->newcommands['\item'] = [[$this, 'itemCommand'], 1, ''];
         $this->newenvironments['proofc'] = [[$this, 'proofcEnvironment'], 1, ''];
         $this->newenvironments['convention'] = [[$this, 'conventionEnvironment'], 0, null];
         $this->newenvironments['equation'] = [[$this, 'equationEnvironment'], 0, null, 'math'=> 1];
@@ -287,6 +315,7 @@ final class praticeVisitor extends Visitor
         $this->newenvironments['example'] = [[$this, 'commonEnvironment'], 1, ''];
         $this->newenvironments['enumerate'] = [[$this, 'enumerateEnvironment'], 1, '1'];
         $this->newenvironments['itemize'] = [[$this, 'itemizeEnvironment'], 0, null];
+        $this->newenvironments['description'] = [[$this, 'descriptionEnvironment'],0,null];
 
         parent::__construct($socketPath);
         $this->title = $title;
