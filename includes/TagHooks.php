@@ -21,6 +21,8 @@ class tagHooks
     \newcommand{\sp}{\mathfrak{sp}}
     \newcommand{\Pic}{\operatorname{Pic}}
     \newcommand{\NS}{\operatorname{NS}}
+    \newcommand{\textbf}[1]{\'\'\'#1\'\'\'}
+    \newcommand{\textit}[1]{\'\'#1\'\'}
     ';
 
     public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater)
